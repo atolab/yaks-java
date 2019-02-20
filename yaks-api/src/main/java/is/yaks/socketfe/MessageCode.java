@@ -2,23 +2,30 @@ package is.yaks.socketfe;
 
 public enum MessageCode 
 {
-	NONE(0x0),
+
+	LOGIN(0x01),
+	LOGOUT(0x02),
+	WORKSPACE(0X03),
 	
-	OPEN(0x01),
-	CREATE(0x02),
-	DELETE(0x03),
 	PUT(0xA0),
-	PATCH(0xA1),
+	UPDATE(0xA1),
 	GET(0xA2),
+	DELETE(0xA3),
+	
 	SUB(0xB0),
 	UNSUB(0xB1),
-	NOTIFY(0xB2),
-	EVAL(0xB3),
+	NOTIFY(0xB2),	
+	
+	REG_EVAL(0xC0),
+	UNREG_EVAL(0xC1),
+	EVAL(0xC2),
+
 	OK(0xD0),
-	VALUE(0xD1),
-	VALUES(0xD2),
+	VALUES(0xD1),
+
 	ERROR(0xE0);
 	
+
 	private int value;    
 
 	private MessageCode(int value) {

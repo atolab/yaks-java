@@ -1,47 +1,51 @@
 package is.yaks.socket.messages;
 
+import java.util.Properties;
+
+import is.yaks.Path;
 import is.yaks.socketfe.Message;
 import is.yaks.socketfe.MessageCode;
 
 public class MessageFactory {
 
 	// use the getMessage method to get corresponding message type object
-	public Message getMessage(MessageCode msgCode) 
+
+	public Message getMessage(MessageCode msgCode, Properties properties) 
 	{
-		if( msgCode == null ) {
-			return new MessageNone();
-		} else if(msgCode.equals(MessageCode.OPEN)) {
-			return new MessageOpen();
-		} else if(msgCode.equals(MessageCode.CREATE)) {
-			return new MessageCreate();
-		} else if(msgCode.equals(MessageCode.DELETE)) {
-			return new MessageDelete();
+		if(msgCode.equals(MessageCode.LOGIN)) {
+			return new LoginMessage(properties);
+		} else if(msgCode.equals(MessageCode.LOGOUT)) {
+			return new LogoutMessage();
+		} else if(msgCode.equals(MessageCode.WORKSPACE)) {
+			return new WorkspaceMessage();
 		} else if(msgCode.equals(MessageCode.PUT)) {
-			return new MessagePut();
-		} else if(msgCode.equals(MessageCode.PATCH)) {
-			return new MessagePatch();
+			return new PutMessage(properties);
 		} else if(msgCode.equals(MessageCode.GET)) {
-			return new MessageGet();
+			return new GetMessage();
+		} else if(msgCode.equals(MessageCode.UPDATE)) {
+			return new UpdateMessage();
+		} else if(msgCode.equals(MessageCode.DELETE)) {
+			return new DeleteMessage();
 		} else if(msgCode.equals(MessageCode.SUB)) {
-			return new MessageSub();
+			return new SubscribeMessage();
 		} else if(msgCode.equals(MessageCode.UNSUB)) {
-			return new MessageUnsub();
+			return new UnsubscribeMessage();
 		} else if(msgCode.equals(MessageCode.NOTIFY)) {
-			return new MessageNotify();
+			return new NotifyMessage();
 		} else if(msgCode.equals(MessageCode.EVAL)) {
-			return new MessageEval();
-		} else if(msgCode.equals(MessageCode.OK)) {
-			return new MessageOk();
-		} else if(msgCode.equals(MessageCode.VALUE)) {
-			return new MessageValue();
+			return new EvalMessage();
+		} else if(msgCode.equals(MessageCode.REG_EVAL)) {
+			return new RegisterEvalMessage();
+		} else if(msgCode.equals(MessageCode.UNREG_EVAL)) {
+			return new UnregisterEvalMessage();
 		} else if(msgCode.equals(MessageCode.VALUES)) {
-			return new MessageValues();
+			return new ValuesMessage();
+		} else if(msgCode.equals(MessageCode.OK)) {
+			return new OkMessage();
 		} else if(msgCode.equals(MessageCode.ERROR)) {
-			return new MessageError();
-		} else if(msgCode.equals(MessageCode.NONE)) {
-			return new MessageNone();
+			return new ErrorMessage();
 		} 
-		return new MessageInvalid();
+		return null;
 	}
 
 }

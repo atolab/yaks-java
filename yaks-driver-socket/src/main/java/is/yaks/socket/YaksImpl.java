@@ -1,10 +1,14 @@
 package is.yaks.socket;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.StandardSocketOptions;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.List;
@@ -13,41 +17,38 @@ import java.util.Properties;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
-import javax.ws.rs.core.MediaType;
-
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-
 import is.yaks.Access;
+import is.yaks.Admin;
 import is.yaks.Encoding;
 import is.yaks.Path;
 import is.yaks.Storage;
+import is.yaks.Workspace;
 import is.yaks.Yaks;
-import is.yaks.socket.messages.MessageCreate;
 import is.yaks.socket.messages.MessageFactory;
 import is.yaks.socket.utils.GsonTypeToken;
-import is.yaks.socket.utils.Utils;
 import is.yaks.socket.utils.YaksConfiguration;
-import is.yaks.socketfe.EntityType;
 import is.yaks.socketfe.Message;
 import is.yaks.socketfe.MessageCode;
 
 public class YaksImpl implements Yaks {
 
 
-	private Access access;
-	private Storage storage;
-	private static SocketChannel channel;
+	private static Workspace workspace;
+	private static SocketChannel sock;
+	private static Selector selector;
+	private static BufferedReader input = null;	
 
-	private WebResource webResource;
     private Map<String, Access> accessById = new HashMap<String, Access>();
     private Map<String, Storage> storageById = new HashMap<String, Storage>();
 
+    private AdminImpl adminImpl;
+    
     private YaksConfiguration config = YaksConfiguration.getInstance();
   
     private GsonTypeToken gsonTypes = GsonTypeToken.getInstance();
     
     private static YaksImpl instance;
+    Runtime rt = null;
     
     
     private YaksImpl(){}
@@ -63,7 +64,7 @@ public class YaksImpl implements Yaks {
  	
     private YaksImpl(String... args) {
         if (args.length == 0) {
-            logger.error("Usage: <yaksUrl>");
+    //        logger.error("Usage: <yaksUrl>");
             System.exit(-1);
         }
         String yaksUrl = args[0];
@@ -72,245 +73,128 @@ public class YaksImpl implements Yaks {
         }
 
         config.setYaksUrl(yaksUrl);
-        webResource = config.getClient().resource(config.getYaksUrl());
-
-        registerShutdownHook();
     }
     
     public static SocketChannel getChannel() {
-		return channel;
+		return sock;
 	}
 
-	
+ 
+    
     @Override
-    public Access createAccess(Path scopePath, long cacheSize, Encoding encoding) {
-    	System.out.println("::: Inside createAccess1 of YaksImpl ::: ");
-        switch (encoding) {
-        case JSON:
-        default:
-        	try {
-        		ByteBuffer byteBuffer;
-        		if (channel.isConnected()) {
-	        		MessageCreate msgCreateAccess = new MessageCreate(EntityType.ACCESS, Path.ofString("//fos"), "", 1024, "", false);		
-	        		channel.write(msgCreateAccess.write());			
-
-        			byteBuffer = ByteBuffer.allocate(1);
-        			channel.read(byteBuffer);
-        			byteBuffer.flip();
-        			int msgDataSize = (int) byteBuffer.get();
-
-        			// get data
-        			byteBuffer = ByteBuffer.allocate(msgDataSize);
-        			channel.read(byteBuffer.order(ByteOrder.BIG_ENDIAN));
-        			byteBuffer.flip();  // make buffer ready for read
-        			access = msgCreateAccess.createAccess(byteBuffer);
-
-        		} else {
-        			Utils.fail("Yaks instance failed to connect to SocketChannel");
-        			return null;
-        		}
-        	} catch (IOException e) {
-        		Utils.fail("Yaks instance failed to connect to SocketChannel");
-        		e.printStackTrace();
-        	}
-        }
-    	return access;
-    }
-
-    @Override
-    public Access createAccess(String id, Path path, long cacheSize, Encoding encoding) {
-    	System.out.println("::: Inside createAccess2 of YaksImpl ::: ");
-    	switch (encoding) {
-        case JSON:
-        default:
-        	access = new AccessImpl(id, path, cacheSize);
-        	return access;
-        }
-    }
-
-    @Override
-    public List<String> getAccess() {
-        WebResource wr = webResource.path("/yaks/access");
-        ClientResponse response = wr.accept(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
-
-        String data = response.getEntity(String.class);
-        if (response.getStatus() == HttpURLConnection.HTTP_OK) {
-            List<String> idList = config.getGson().fromJson(data, gsonTypes.getCollectionTypeToken(String.class));
-            return idList;
-        } else {
-            Utils.fail("Yaks instance failed to getAccess():\ncode: " + response.getStatus() + "\n" + "body: " + data);
-            return null;
-        }
-    }
-
-    @Override
-    public Access getAccess(String id) {
-        Access ret = accessById.get(id);
-        if (ret != null) {
-            return ret;
-        }
-
-        WebResource wr = webResource.path("/yaks/access/" + id);
-        ClientResponse response = wr.accept(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
-
-        String data = response.getEntity(String.class);
-        switch (response.getStatus()) {
-        case HttpURLConnection.HTTP_OK:
-            AccessImpl access = config.getGson().fromJson(data, gsonTypes.getTypeToken(is.yaks.socket.AccessImpl.class));
-            accessById.put(access.getAccessId(), access);
-            if (access.getAlias() != null) {
-                accessById.put(access.getAlias(), access);
-            }
-            return access;
-        case HttpURLConnection.HTTP_NOT_FOUND:
-        default:
-            Utils.fail("Yaks instance failed to getAccess(" + id + "):\ncode: " + response.getStatus() + "\n" + "body: "
-                    + data);
-            return null;
-        }
-    }
-
-    @Override
-    public Storage createStorage(Path path, Properties option) {
-
-    	System.out.println("::: Inside createStorage1 of YaksImpl ::: ");
-
-    	InetSocketAddress inetAddr = new InetSocketAddress(option.getProperty("host"), Integer.parseInt(option.getProperty("port")));
-
-    	try {
-    		channel = SocketChannel.open(inetAddr);
-
-    		ByteBuffer byteBuffer;
-    		openConnection(channel);
-    		if (channel.isConnected()) 
-    		{
-    			MessageCreate msgCreateStorage = new MessageCreate(EntityType.STORAGE,	path, "", 1024, "", false);
-    			channel.write(msgCreateStorage.write());			
-
-    			byteBuffer = ByteBuffer.allocate(1);
-    			channel.read(byteBuffer);
-    			byteBuffer.flip();
-    			int msgDataSize = (int) byteBuffer.get();
-
-    			// get data
-    			byteBuffer = ByteBuffer.allocate(msgDataSize);
-    			channel.read(byteBuffer.order(ByteOrder.BIG_ENDIAN));
-    			byteBuffer.flip();  // make buffer ready for read
-    			storage = msgCreateStorage.createStorage(byteBuffer);
-
-    		} else {
-    			Utils.fail("Yaks instance failed to connect to SocketChannel with host: "+ option.getProperty("host")+ ", port: "+option.getProperty("port"));
-    			return null;
-    		}
-    	} catch (IOException e) {
-    		Utils.fail("Yaks instance failed to open a SocketChannel with host: "+ option.getProperty("host")+ ", port: "+option.getProperty("port"));
-    		e.printStackTrace();
+	public Yaks login(Properties properties) {
+		Runtime rt = Runtime.getRuntime();
+		int port;
+    	String h = (String)properties.get("host");
+    	String p = (String)properties.get("port");
+    	if(p.equals("")) {
+    		port = Yaks.DEFAUL_PORT;
+    	} else {
+    		port = Integer.parseInt(p);
     	}
+    	try {
+			// create non-blocking io socket
+    		InetSocketAddress addr = new InetSocketAddress(InetAddress.getByName(h), port);
+    		selector = Selector.open();
+    		sock = SocketChannel.open(addr);
+    		sock.setOption(StandardSocketOptions.TCP_NODELAY, true);
+    		sock.configureBlocking(false);
+    		sock.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+    		
+    		Message loginM = new MessageFactory().getMessage(MessageCode.LOGIN, properties);
+    		//write msg
+    		loginM.write(sock, loginM);
 
-    	return storage;
-    }
-
-    @Override
-    public Storage createStorage(String id, Path path, Properties option) {
-    	
-       	System.out.println("::: Inside createStorage2 of YaksImpl ::: ");
-
-    	storage = new StorageImpl(id, path.toString());
-
-    	return storage;
-    }
-
-    @Override
-    public List<String> getStorages() {
-        WebResource wr = webResource.path("/yaks/storages");
-        ClientResponse response = wr.accept(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
-
-        if (response.getStatus() == HttpURLConnection.HTTP_OK) {
-            List<String> idList = config.getGson().fromJson(response.getEntity(String.class),
-                    gsonTypes.getCollectionTypeToken(String.class));
-
-            return idList;
-        } else {
-            Utils.fail("Yaks instance failed to getStorage():\ncode: " + response.getStatus() + "\n" + "body: "
-                    + response.getEntity(String.class));
-            return null;
-        }
-    }
-
-    @Override
-    public Storage getStorage(String id) {
-        Storage ret = storageById.get(id);
-        if (ret != null) {
-            return ret;
-        }
-
-        WebResource wr = webResource.path("/yaks/storages/" + id);
-        ClientResponse response = wr.accept(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
-        String data = response.getEntity(String.class);
-        switch (response.getStatus()) {
-        case HttpURLConnection.HTTP_OK:
-            StorageImpl storage = config.getGson().fromJson(data,
-                    gsonTypes.getTypeToken(is.yaks.socket.StorageImpl.class));
-            if (storage == null) {
-                throw new NullPointerException("Invalid null storage returned");
-            }
-            storageById.put(storage.getStorageId(), storage);
-            if (storage.getAlias() != null) {
-                storageById.put(storage.getAlias(), storage);
-            }
-            return storage;
-        case HttpURLConnection.HTTP_NOT_FOUND:
-        default:
-            Utils.fail("Yaks instance failed to getStorage(" + id + "):\ncode: " + response.getStatus() + "\n"
-                    + "body: " + data);
-            return null;
-        }
-    }
-    
-    
-    
-    private void openConnection(SocketChannel channel) {
-    	
-    	MessageFactory messageFactory = new MessageFactory();
-    	Message msgOpen = messageFactory.getMessage(MessageCode.OPEN);
-		try {
-			channel.write(msgOpen.write());			
-
-			ByteBuffer byteBuffer = ByteBuffer.allocate(1);
-			channel.read(byteBuffer);
-			byteBuffer.flip();
-			int msgDataSize = (int) byteBuffer.get();
+    		System.in.read();
+    		//read response msg
+    		ByteBuffer buffer = ByteBuffer.allocate(1);
+			sock.read(buffer);
+			loginM.read(sock, buffer);
 			
-			// get data
-			byteBuffer = ByteBuffer.allocate(msgDataSize);
-			channel.read(byteBuffer.order(ByteOrder.BIG_ENDIAN));
-			byteBuffer.flip();  // make buffer ready for read
-			msgOpen.read(byteBuffer);
-		} 
-		catch (IOException e) {
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
-    }
+		return instance;
+	}
     
-    private void registerShutdownHook() {
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                ForkJoinPool.commonPool().awaitQuiescence(5, TimeUnit.SECONDS);
-                YaksConfiguration.getInstance().getClient().destroy();
-                YaksConfiguration.getInstance().getExecutorService().shutdown();
-            }
-        });
+    
+    @SuppressWarnings("static-access")
+	@Override
+	public Admin admin() {
+    	
+    	if(sock.isConnected()) {
+
+    		adminImpl = AdminImpl.getInstance();
+    		
+    		workspace = workspace(Path.ofString("/"+Admin.PREFIX+"/"+Admin.MY_YAKS));
+    		
+    		adminImpl.setWorkspace(workspace);
+    	}
+   	
+    	return adminImpl;
+	}
+    
+    
+	/**
+	 *  Creates a workspace relative to the provided **path**.
+	        Any *put* or *get* operation with relative paths on this workspace
+	        will be prepended with the workspace *path*.
+	 */
+    @Override
+    public Workspace workspace(Path path) {
+    	WorkspaceImpl wksp = new WorkspaceImpl();
+    	try {
+    		if(path != null) {
+    			int wsid = 0;
+    			
+    			Message worskpaceM = new MessageFactory().getMessage(MessageCode.WORKSPACE, null);
+    			worskpaceM.setPath(path);
+    			if(sock.isConnected()) {
+    				//post msg
+    				worskpaceM.write(sock, worskpaceM);
+
+    				System.in.read();
+    				
+    				//read response msg
+    				ByteBuffer buffer = ByteBuffer.allocate(1);
+    				sock.read(buffer);
+    				Message msgReply = worskpaceM.read(sock, buffer);
+    				//check_reply_is_ok
+    				if(msgReply.getMessageCode().equals(MessageCode.OK)) {
+    					//find_property wsid
+    					Map<String, String> list = msgReply.getPropertiesList();
+    					if(!list.isEmpty()) {
+    						wsid = Integer.parseInt(list.get("wsid"));
+    					}
+    					wksp.setWsid(wsid);
+    					wksp.setPath(path);
+    				}
+    			}
+    		}
+    	} catch (IOException e) {
+    		e.printStackTrace();
+    	}
+    	return wksp;
     }
 
 	@Override
 	public void close() {
 		try 
 		{
-			channel.close();
+			sock.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
+	
+
+
+	@Override
+	public void logout() {
+		
+	}
+
+	
 }

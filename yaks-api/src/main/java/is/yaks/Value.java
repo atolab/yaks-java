@@ -1,13 +1,23 @@
 package is.yaks;
 
-import java.nio.ByteBuffer;
-
 public class Value {
 	
 	private Encoding encoding;
 	
-	private ByteBuffer value;
+	private String value;
 
+	public Value() {}
+	
+	public Value(String val){
+		value = val;
+		encoding = Encoding.RAW; //encoding by default RAW
+	}
+	
+	public Value(String val, Encoding enc) {
+		value = val;
+		encoding = enc;
+	}
+	
 	public Encoding getEncoding() {
 		return encoding;
 	}
@@ -16,12 +26,12 @@ public class Value {
 		this.encoding = encoding;
 	}
 
-	public ByteBuffer getValue() {
+	public String getValue() {
 		return value;
 	}
 
-	public void setValue(ByteBuffer value) {
-		this.value = value;
+	public void setValue(String val) {
+		this.value = val;
 	}
 	
 

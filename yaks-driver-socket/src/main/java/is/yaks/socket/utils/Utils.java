@@ -1,7 +1,6 @@
 package is.yaks.socket.utils;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Iterator;
 import java.util.List;
@@ -10,14 +9,13 @@ import java.util.Random;
 
 import javax.ws.rs.core.MultivaluedMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import is.yaks.Encoding;
+import is.yaks.Path;
+import is.yaks.Value;
 
 public class Utils {
 
-    public static final Logger LOG = LoggerFactory.getLogger(Utils.class);
+ //   public static final Logger LOG = LoggerFactory.getLogger(Utils.class);
     public static final String IS_YAKS_ACCESS = "is.yaks.access";
     public static final String IS_YAKS_STORAGE = "is.yaks.storage";
 
@@ -109,7 +107,7 @@ public class Utils {
 		    Map.Entry<String, String> entry = entries.next();
 		    buffer.put((byte) entry.getKey().length()); 
 		    buffer.put(entry.getKey().getBytes()); 
-		    buffer.put((byte) 0x01); //Encoding.BYTE_BUFFER = 0x01
+		    buffer.put((byte) Encoding.RAW.getIndex()); //Encoding.RAW = 0x01
 		    buffer.put((byte) entry.getValue().length());
 		    buffer.put(entry.getValue().getBytes());
 		}	
@@ -117,6 +115,60 @@ public class Utils {
 		return buffer;  
 	} 
 
+	public static ByteBuffer porpertiesListToByteBuffer(Map<String, String> propertiesList) 
+	{   
+		ByteBuffer buffer = ByteBuffer.allocate(512);
+	//	buffer.put((byte)propertiesList.size()); 		// put the size of the map i.e. 0x01 
+		buffer.put((byte) 0x00);
+		
+		for (Map.Entry<String, String> entry : propertiesList.entrySet())
+		{
+		    String key = entry.getKey();
+		    String val = entry.getValue();
+		 //   buffer.put((byte)key.length());
+		    buffer.put(key.getBytes());
+		    buffer.put("=".getBytes());
+		    buffer.put(val.getBytes());
+		}
+		
+		// adding the property length
+		buffer.flip();
+		int limit = buffer.limit();
+		buffer.put(0, (byte) (limit-1));
+		
+//		buffer.flip();
+		return buffer;  
+	} 
+	
+	public static ByteBuffer workspaceListToByteBuffer(Map<Path, Value> wkspList) 
+	{   
+		ByteBuffer buffer = ByteBuffer.allocate(512);
+		buffer.put((byte)wkspList.size()); 		// put the size of the map i.e. 0x01 
+		
+		for (Map.Entry<Path, Value> entry : wkspList.entrySet())
+		{
+		    Path key = (Path)entry.getKey();
+		    Value val = (Value)entry.getValue();
+		    String v = val.getValue().toString();
+			if(!val.getEncoding().equals(Encoding.JSON)) {
+			    if(v.contains("{") && v.contains("}")) {
+				    v = v.substring(v.indexOf("{")+1, v.indexOf("}"));
+				}
+			} 
+		    buffer.put((byte)key.toString().length());
+		    buffer.put(key.toString().getBytes());
+		    buffer.put((byte)val.getEncoding().getIndex());
+		    if(val.getEncoding().getIndex() == Encoding.RAW.getIndex()) {
+		    	buffer.put((byte)val.getEncoding().getIndex());
+		    	buffer.put(Encoding.get_raw_format().getBytes());
+		    }
+		    buffer.put((byte)v.length());
+		    buffer.put(v.getBytes());
+		}
+		buffer.flip();
+		return buffer;  
+	} 
+	
 	public static ByteBuffer listDataToByteBuffer(List<String> data) 
 	{   
 		ByteBuffer buffer = ByteBuffer.allocate(512);

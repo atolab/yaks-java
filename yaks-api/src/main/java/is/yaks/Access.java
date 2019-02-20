@@ -15,19 +15,19 @@ public interface Access {
      * 
      * If the selector contains wildcards, the value is set to each existing key matching the selector.
      */
-    public Access put(Selector selector, Object value);
+    public boolean put(Selector selector, Object value);
 
     /**
      * Updates an existing association between a Selector and a value with a delta (i.e. a part of the value that have
      * to be updated). Notice that if the Selector is not yet associated with a value in the store the delta will be
      * inserted as a full value.
      */
-    public Access deltaPut(Selector selector, Object delta);
+    public boolean deltaPut(Selector selector, Object delta);
 
     /**
-     * Removes the Selector from the store, if present.
+     * Removes the Path from the store, if present.
      */
-    public Access remove(Selector selector);
+    public boolean remove(Path path);
 
     /**
      * Subscribes to the keys matching with the selector
@@ -53,12 +53,12 @@ public interface Access {
     /**
      * Removes a previously registered subscription with the specified selector.
      */
-    public void unsubscribe(long subscriptionId);
+    public boolean unsubscribe(long subscriptionId);
     
     /**
      * Removes a previously registered subscription with the specified selector.
      */
-    public void unsubscribe(String subscriptionId);
+    public boolean unsubscribe(String subscriptionId);
 
     /**
      * Returns a map of the Selector/values matching the specified Selector.
@@ -86,12 +86,18 @@ public interface Access {
      * Close the current Access connection. Notice that it is possible to re-open this connection calling the
      * Yaks.resolve() operation.
      */
-    public void close();
+    public boolean close();
 
     /**
      * Close the current Access connection and dispose the Access. Notice that it is NOT possible to re-open this
      * connection calling the Yaks.resolve() operation.
      */
-    public void dispose();
+    public boolean dispose();
+    
+    /**
+     * Returns the accessId
+     * @return String accessId
+     */
+    public String getAccessId();
 
 }

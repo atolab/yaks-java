@@ -5,5 +5,5 @@ public interface Storage {
     /**
      * Dispose the Storage.
      */
-    public void dispose();
+    public boolean dispose();
 }

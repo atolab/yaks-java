@@ -4,21 +4,26 @@ import java.util.Map;
 
 public class Path implements Comparable<Path> {
 
-    private String pathValue;
+	
+	private Encoding encoding;
+	private String pathValue;
 
     private Path(String p) {
         if (p == null) {
             throw new NullPointerException("The given path is null");
         }
         validateSelectorPath(p);
+        encoding = Encoding.RAW;
         this.pathValue = p;
     }
 
-    private void validateSelectorPath(String p) throws IllegalArgumentException {
-        // TODO: validate the path string
+    private void validateSelectorPath(String p) throws IllegalArgumentException 
+    {
     }
 
-    public static Path ofString(String string) {
+
+
+	public static Path ofString(String string) {
         return new Path(string);
     }
 
@@ -28,7 +33,6 @@ public class Path implements Comparable<Path> {
     }
 
     public Map<String, String> getQuery() {
-        /// TODO
         return null;
     }
 
@@ -57,4 +61,11 @@ public class Path implements Comparable<Path> {
         return this.pathValue.hashCode();
     }
 
+    public Encoding getEncoding() {
+		return encoding;
+	}
+
+	public void setEncoding(Encoding encoding) {
+		this.encoding = encoding;
+	}
 }
