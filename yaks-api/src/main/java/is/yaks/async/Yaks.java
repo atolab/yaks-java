@@ -2,11 +2,9 @@ package is.yaks.async;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 
-import is.yaks.Encoding;
 import is.yaks.Path;
 
 /**
@@ -14,6 +12,8 @@ import is.yaks.Path;
  */
 public interface Yaks {
 
+	public static int DEFAUL_PORT = 7887;
+	
     /**
      * Static operation to get an instance of a Yaks implementation.
      * 
@@ -50,74 +50,38 @@ public interface Yaks {
         }
         return null;
     }
-
+    
     /**
-     * Creates an Access with a scope path and a cache with the specified size (in bytes). An Access id will be created
-     * by Yaks and returned as a cookie.
+     * Establish a session with the Yaks instance reachable through the
+     * provided *locator*.
      * 
-     * @param scopePath
-     *            The prefix of the accessible key space (keys outside this root won't be accessible)
-     * @param cacheSize
-     *            The size of the Access cache
-     */
-    public CompletableFuture<Access> createAccess(Path scopePath, long cacheSize, Encoding encoding);
-
+     * Valid format for the locator are valid  IP addresses as well
+     * as the combination IP:PORT.
+     */    
+    public Yaks login(Properties properties);
+    
     /**
-     * Creates an Access with the specified id, with a scope path and a cache with the specified size (in bytes). If not
-     * already existing, the access will be created by Yaks and the id returned as a cookie. If already existing, the id
-     * of the existing Access will be returned
-     * 
-     * @param id
-     *            The Access identifier
-     * @param scopePath
-     *            The prefix of the accessible key space (keys outside this root won't be accessible)
-     * @param cacheSize
-     *            The size of the Access cache
+     * Creates an admin workspace that provides helper operations to
+     * administer Yaks.
      */
-    public CompletableFuture<Access> createAccess(String id, Path scopePath, long cacheSize, Encoding encoding);
-
+    public Admin admin();
+        
     /**
-     * Returns list of existing Access identifiers.
+     * Creates a workspace relative to the provided **path**.
+     * Any *put* or *get* operation with relative paths on this workspace
+     * will be prepended with the workspace *path*.
      * 
      */
-    public CompletableFuture<List<String>> getAccess();
-
-    /***
-     * Returns the information details about the Access with identifier id (if exists)
-     * 
-     * @param id
-     * @return
+    public Workspace workspace(Path path);
+    
+    /**
+     * Closes the Yaks api
      */
-    public CompletableFuture<Access> getAccess(String id);
+    public void close();
 
     /**
-     * Creates an Storage with a scope path and some options for its creation. A Storage id will be created by Yaks and
-     * returned as a cookie.
+     * Logout of the Yaks api
      */
-    public CompletableFuture<Storage> createStorage(Path path, Properties option);
-
-    /**
-     * Creates a Storage in the global key/value store.
-     * 
-     * @param id
-     *            The Storage identifier
-     * @param path
-     *            The prefix of the key space managed by the Storage.
-     * @param option
-     *            Options to pass to the Storage implementation (e.g. back-end configuration)
-     */
-    public CompletableFuture<Storage> createStorage(String id, Path path, Properties option);
-
-    /**
-     * Returns list of existing Storage identifiers.
-     * 
-     * @return future list of id in string format
-     */
-    public CompletableFuture<List<String>> getStorages();
-
-    /**
-     * Finds an existing Storage with a specified identifier. Null is returned if not found.
-     */
-    public CompletableFuture<Storage> getStorage(String id);
-
+	public void logout();
+    
 }

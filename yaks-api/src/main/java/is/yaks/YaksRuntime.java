@@ -2,7 +2,7 @@ package is.yaks;
 
 import java.nio.channels.SocketChannel;
 
-import is.yaks.socketfe.Message;
+import is.yaks.Message;
 
 public interface YaksRuntime {
 	

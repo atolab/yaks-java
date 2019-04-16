@@ -2,9 +2,8 @@ package is.yaks.socket.messages;
 
 import java.util.Properties;
 
-import is.yaks.Path;
-import is.yaks.socketfe.Message;
-import is.yaks.socketfe.MessageCode;
+import is.yaks.Message;
+import is.yaks.utils.MessageCode;
 
 public class MessageFactory {
 

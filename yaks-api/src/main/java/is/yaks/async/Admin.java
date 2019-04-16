@@ -1,12 +1,11 @@
-package is.yaks;
+package is.yaks.async;
 
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
 
 import is.yaks.Path;
 import is.yaks.Value;
-import is.yaks.Workspace;
-import is.yaks.Yaks;
 
 /**
  * 
@@ -30,50 +29,50 @@ public interface Admin {
 	 * Not supported in this version.
 	 * 
 	 */
-	public boolean add_frontend(int feid, Properties properties, Yaks yaks);
+	public CompletableFuture<Boolean> add_frontend(int feid, Properties properties, Yaks yaks);
 	
 	/**
 	 * Returns the frontend with the front-end ID **feid** on the Yaks instance with UUID **yaks**.
 	 * 
 	 */
-	public Value get_frontend(Yaks yaks);
+	public CompletableFuture<Value> get_frontend(Yaks yaks);
 	
 	/**
 	 * Returns the list of frontends available on the Yaks instance with UUID **yaks**.
 	 * 
 	 */
-	public List<Value> get_frontends(Yaks yaks);
+	public CompletableFuture<List<Value>> get_frontends(Yaks yaks);
 	
 	
 	/**
 	 * Not supported in this version.
 	 * 
 	 */
-	public boolean remove_frontend(String feid, Yaks yaks);
+	public CompletableFuture<Boolean> remove_frontend(String feid, Yaks yaks);
 	
 	/**
 	 * Not supported in this version.
 	 * 
 	 */
-	public boolean add_backend(String beid, Properties properties, Yaks yaks);
+	public CompletableFuture<Boolean> add_backend(String beid, Properties properties, Yaks yaks);
 	
 	/**
 	 * Gets the  back-end with id **beid** on the Yaks instance with UUID **yaks**.
 	 * 
 	 */
-	public Value get_backend(Yaks yaks);
+	public CompletableFuture<Value> get_backend(Yaks yaks);
 		
 	/**
 	 * Gets the list of all available back-ends on the Yaks instance with UUID **yaks**.
 	 *        
 	 */
-	public List<Value> get_backends(String beid, Yaks yaks);	
+	public CompletableFuture<List<Value>> get_backends(String beid, Yaks yaks);	
 
 	/**
 	 * Not supported in this version.
 	 * 
 	 */
-	public void remove_backend(String beid, Yaks yaks);
+	public CompletableFuture<Void> remove_backend(String beid, Yaks yaks);
 		
 	/**
 	 *  Adds a storage named **stid** on the backend **beid** and with
@@ -87,7 +86,7 @@ public interface Admin {
 	 *  **yaks**.
 	 * @return is_reply_ok         
 	 */
-	public boolean add_storage(String stid, Properties properties, String beid, Yaks yaks);
+	public CompletableFuture<Boolean> add_storage(String stid, Properties properties, String beid, Yaks yaks);
 	
 	/**
 	 * Gets the  storage with id **stid** on the Yaks instance with UUID **yaks**.
@@ -99,30 +98,30 @@ public interface Admin {
 	 * Gets the list of all available storages on the Yaks instance with UUID **yaks**.
 	 * 
 	 */
-	public List<Value> get_storages(String beid, Yaks yaks);
+	public CompletableFuture<List<Value>> get_storages(String beid, Yaks yaks);
 	
 	/**
 	 * Removes the  storage with id **stid** on the Yaks instance with UUID **yaks**.
 	 * 
 	 */
-	public boolean remove_storage(String stid, Yaks yaks);
+	public CompletableFuture<Boolean> remove_storage(String stid, Yaks yaks);
 	
 	/**
 	 * Gets the list of all available sessions on the Yaks instance with UUID **yaks**
 	 * 
 	 */
-	public List<Value> get_sessions(String feid, Yaks yaks);
+	public CompletableFuture<List<Value>> get_sessions(String feid, Yaks yaks);
 	
 	/**
 	 * Not supported in this version.
 	 * 
 	 */
-	public boolean close_session(String sid, Yaks yaks);
+	public CompletableFuture<Boolean> close_session(String sid, Yaks yaks);
 	
 	/**
 	 * Gets the list of all active subscriptions on the Yaks instance with UUID **yaks**
 	 *  
 	 */
-	public List<Value> get_subscriptions(String sid, Yaks yaks);
+	public CompletableFuture<List<Value>> get_subscriptions(String sid, Yaks yaks);
 	
 }

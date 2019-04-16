@@ -1,18 +1,19 @@
-package is.yaks.socket;
+package is.yaks.socket.async;
 
 import java.io.IOException;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
 
-import is.yaks.Admin;
+import is.yaks.async.Admin;
 import is.yaks.Encoding;
 import is.yaks.Listener;
 import is.yaks.Path;
 import is.yaks.Selector;
 import is.yaks.Value;
-import is.yaks.Workspace;
-import is.yaks.Yaks;
+import is.yaks.async.Workspace;
+import is.yaks.async.Yaks;
 
-public class SocketClient 
+public class AsyncSocketClient 
 {	
     private static Yaks yaks;
     private static Workspace workspace;
@@ -39,7 +40,7 @@ public class SocketClient
 		
 		System.out.println(">> login");		
 		yaks = yaks.login(properties);
-		
+
 		
 		//creates an admin storage & workspace
 		admin = yaks.admin();
@@ -48,23 +49,22 @@ public class SocketClient
 		properties = new Properties();
 		properties.setProperty("selector","/myyaks/**");
 		admin.add_storage(stid, properties, "Memory", yaks);
-		
+
 		
 		// create workspace attached to the session
 		System.out.println(">> create workspace and subscription"); 
 		workspace = yaks.workspace(Path.ofString("/myyaks"));	
-		String subid = workspace.subscribe(Selector.ofString("/myyaks/example/**"), obs);
-		
+		CompletableFuture<String> subidFuture = workspace.subscribe(Selector.ofString("/myyaks/example/**"), obs);
+		String subid = subidFuture.get();
 		
 		System.out.println(">> Put Tuple 1 - subid: "+ subid);
 		workspace.put(Path.ofString("/myyaks/example/one"), new Value("hello!", Encoding.STRING), quorum);
-//		System.out.println("Called OBSERVER : "+listener.toString());
-		
+
+
 		
 		System.out.println(">> Put Tuple 2");
 		workspace.put(Path.ofString("/myyaks/example/two"), new Value("hello2!"), quorum);
-//		System.out.println("Called OBSERVER : "+listener.toString());
-		
+
 		
 		System.out.println(">> Put Tuple 3");
 		workspace.put(Path.ofString("/myyaks/example/three"), new Value("hello3!"), quorum);
@@ -78,15 +78,15 @@ public class SocketClient
 		
 		
 		System.out.println(">> Get Tuple 1");
-		System.out.println("GET: [" + workspace.get(Selector.ofString("/myyaks/example/one"))+"]");
+		System.out.println("GET: [" + workspace.get(Selector.ofString("/myyaks/example/one"), quorum)+"]");
 		
 		
 		System.out.println(">> Get Tuple 2");
-		System.out.println("GET: ["+ workspace.get(Selector.ofString("/myyaks/example"))+"]");
+		System.out.println("GET: ["+ workspace.get(Selector.ofString("/myyaks/example"), quorum)+"]");
 		
 		
 		System.out.println(">> Get Tuple 3");
-		System.out.println("GET: [" + workspace.get(Selector.ofString("/myyaks/example/*"))+"]");
+		System.out.println("GET: [" + workspace.get(Selector.ofString("/myyaks/example/*"), quorum)+"]");
 		
 		
 		System.out.println(">> Remove Tuple");
@@ -94,7 +94,7 @@ public class SocketClient
 		
 		
 		System.out.println(">> Get Removed Tuple");
-		System.out.println("GET: ["+ workspace.get(Selector.ofString("/myyaks/example/one"))+"]");
+		System.out.println("GET: ["+ workspace.get(Selector.ofString("/myyaks/example/one"), quorum)+"]");
 		
 		
 		System.out.println(">> Unsubscribe");
@@ -112,7 +112,8 @@ public class SocketClient
 	    
 	    
 	    System.out.println(">> Create subscription without listener");
-	    String sid2 = workspace.subscribe(Selector.ofString("/myyaks/example2/**"));
+	    CompletableFuture<String> sid2Future = workspace.subscribe(Selector.ofString("/myyaks/example2/**"));
+	    String sid2 = sid2Future.get(); 
 	    
 	    
 	    System.out.println(">> Put Tuple");

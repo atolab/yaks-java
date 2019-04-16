@@ -1,4 +1,4 @@
-package is.yaks.socketfe;
+package is.yaks.utils;
 
 public enum ErrorCode 
 {

@@ -1,4 +1,4 @@
-package is.yaks.socket;
+package is.yaks.socket.async;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,18 +10,25 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
 
+
+import is.yaks.Encoding;
 import is.yaks.Path;
-import is.yaks.Admin;
-import is.yaks.Message;
-import is.yaks.Workspace;
-import is.yaks.Yaks;
+import is.yaks.async.Workspace;
+import is.yaks.async.Yaks;
+import is.yaks.async.Admin;
+import is.yaks.socket.WorkspaceImpl;
 import is.yaks.socket.messages.MessageFactory;
 import is.yaks.socket.utils.GsonTypeToken;
 import is.yaks.socket.utils.YaksConfiguration;
+import is.yaks.Message;
 import is.yaks.utils.MessageCode;
 
 public class YaksImpl implements Yaks {
@@ -38,7 +45,7 @@ public class YaksImpl implements Yaks {
   
     private GsonTypeToken gsonTypes = GsonTypeToken.getInstance();
     
-    private static Yaks instance;
+    private static YaksImpl instance;
     Runtime rt = null;
     
     
@@ -95,9 +102,7 @@ public class YaksImpl implements Yaks {
     		Message loginM = new MessageFactory().getMessage(MessageCode.LOGIN, properties);
     		//write msg
     		loginM.write(sock, loginM);
-    		
-    		System.in.read();
-    		
+
     		//read response msg
     		ByteBuffer buffer = ByteBuffer.allocate(1);
 			sock.read(buffer);
@@ -152,9 +157,9 @@ public class YaksImpl implements Yaks {
     				sock.read(buffer);
     				Message msgReply = worskpaceM.read(sock, buffer);
     				//check_reply_is_ok
-    				if(((Message) msgReply).getMessageCode().equals(MessageCode.OK)) {
+    				if(msgReply.getMessageCode().equals(MessageCode.OK)) {
     					//find_property wsid
-    					Map<String, String> list = ((Message) msgReply).getPropertiesList();
+    					Map<String, String> list = msgReply.getPropertiesList();
     					if(!list.isEmpty()) {
     						wsid = Integer.parseInt(list.get("wsid"));
     					}
@@ -166,7 +171,7 @@ public class YaksImpl implements Yaks {
     	} catch (IOException e) {
     		e.printStackTrace();
     	}
-    	return ws;
+    	return (Workspace) ws;
     }
 
 	@Override
@@ -178,9 +183,11 @@ public class YaksImpl implements Yaks {
 			e.printStackTrace();
 		}
 	}
-	
+
 	@Override
 	public void logout() {
-		//:TBD
+	
 	}
+
+	
 }

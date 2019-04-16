@@ -5,28 +5,22 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
 
-import is.yaks.Access;
 import is.yaks.Encoding;
 import is.yaks.Path;
 import is.yaks.Selector;
-import is.yaks.Storage;
 import is.yaks.Value;
+import is.yaks.Message;
 import is.yaks.socket.utils.Utils;
 import is.yaks.socket.utils.VLEEncoder;
-import is.yaks.socketfe.EntityType;
-import is.yaks.socketfe.Message;
-import is.yaks.socketfe.MessageCode;
+import is.yaks.utils.MessageCode;
 
 public class MessageImpl implements Message
 {
-
-	
 	
 	private static MessageImpl instance = null;
 
@@ -50,25 +44,16 @@ public class MessageImpl implements Message
 	
 	Path path;
 	Value value;
-	Access access;
-	Storage storage;
+
 	ByteBuffer data;
 	Selector selector;
 	Encoding encoding;
-	EntityType entityType;
 	MessageCode messageCode;
 	
-	Map<String, String> dataList;	
-	
 	Map<Path, Value> valuesList;
-	
+	Map<String, String> dataList;	
 	Map<Path, Value> workspaceList;
-	
 	Map<String, String> propertiesList;
-	
-	
-
-
 
 	public MessageImpl() {
 
@@ -113,7 +98,6 @@ public class MessageImpl implements Message
 	@Override
 	public ByteBuffer write(SocketChannel sock, Message msg) 
 	{
-		System.out.println("Message.write()");
 		
 		ByteBuffer bufVle =  ByteBuffer.allocate(1);
 		ByteBuffer buffer =  ByteBuffer.allocate(vle_length);
@@ -158,9 +142,8 @@ public class MessageImpl implements Message
 	@Override
 	public Message read(SocketChannel sock, ByteBuffer buffer){
 		
-		System.out.println("Message.read()");
 		
-		Message msg = null;
+		Message msg = new MessageImpl();
 
 		try {
 			int msgSize = VLEEncoder.decode(buffer.array()); // decode the vle length
@@ -172,7 +155,7 @@ public class MessageImpl implements Message
 			int msgCode = bytesData.get();
 
 			if ((msgCode & 0xFF) == 0xD0) {
-				System.out.println("Received OK msg 0xD0!");
+//				System.out.println("Received OK msg 0xD0!");
 				msg = new MessageFactory().getMessage(MessageCode.OK, null);
 				propertiesList = new HashMap<String, String>();
 				int flags = (int) bytesData.get(); //get the flags from the msg
@@ -186,7 +169,6 @@ public class MessageImpl implements Message
 					curByte = bytesData.get();
 				}			
 				bb.put(curByte);
-				printHex(bb.array());
 				int corr_id = VLEEncoder.decode(bb.array()); // decode the correlation id
 				msg.setCorrelationId(corr_id);
 				
@@ -207,7 +189,7 @@ public class MessageImpl implements Message
 						}
 						strKey = strValue.substring(0, strValue.indexOf("="));
 						strValue = strValue.substring(strValue.indexOf("=")+1);
-						System.out.println("Decoded key: "+ strKey+ " decoded-value:"+ strValue);
+//						System.out.println("Decoded key: "+ strKey+ " decoded-value:"+ strValue);
 						propertiesList.put(strKey, strValue);
 						msg.add_property(strKey, strValue);
 						
@@ -215,7 +197,7 @@ public class MessageImpl implements Message
 				}
 				
 			} else if ((msgCode & 0xFF) == 0xD1) {
-				System.out.println("Received VALUES msg 0xD1!");
+//				System.out.println("Received VALUES msg 0xD1!");
 				msg = new MessageFactory().getMessage(MessageCode.VALUES, null);
 				Value value; 
 				
@@ -229,7 +211,6 @@ public class MessageImpl implements Message
 					curByte = bytesData.get();
 				}			
 				bb.put(curByte);
-				printHex(bb.array());
 				int corr_id = VLEEncoder.decode(bb.array()); // decode the correlation id
 				msg.setCorrelationId(corr_id);
 				
@@ -260,7 +241,7 @@ public class MessageImpl implements Message
 						} catch (UnsupportedEncodingException e) {
 							e.printStackTrace();
 						}
-						System.out.println("Decoded key: "+ strKey+ " decoded-value: "+ strValue + " Encoding: "+val_encoding);
+//						System.out.println("Decoded key: "+ strKey+ " decoded-value: "+ strValue + " Encoding: "+val_encoding);
 						value = new Value();
 						value.setValue(strValue);
 						value.setEncoding(Encoding.getEncoding(val_encoding));
@@ -270,7 +251,7 @@ public class MessageImpl implements Message
 				
 				
 			} else if ((msgCode & 0xFF) == 0xB2) {
-				System.out.println("Received NOTIFY msg 0xB2!");
+//				System.out.println("Received NOTIFY msg 0xB2!");
 				msg = new MessageFactory().getMessage(MessageCode.NOTIFY, null);
 				propertiesList = new HashMap<String, String>();
 				int flags = (int) bytesData.get(); //get the flags from the msg
@@ -283,7 +264,6 @@ public class MessageImpl implements Message
 					curByte = bytesData.get();
 				}			
 				bb.put(curByte);
-				printHex(bb.array());
 				int corr_id = VLEEncoder.decode(bb.array()); // decode the correlation id
 				msg.setCorrelationId(corr_id);
 				
@@ -303,14 +283,14 @@ public class MessageImpl implements Message
 						}
 						strKey = strValue.substring(0, strValue.indexOf("="));
 						strValue = strValue.substring(strValue.indexOf("=")+1);
-						System.out.println("Decoded key: "+ strKey+ " decoded value:"+ strValue);
+//						System.out.println("Decoded key: "+ strKey+ " decoded value:"+ strValue);
 						propertiesList.put(strKey, strValue);
 						msg.add_property(strKey, strValue);
 					}
 				} 
 				
 			} else if ((msgCode & 0xFF) == 0xE0) {
-				System.out.println("Received ERROR msg 0xE0!");
+//				System.out.println("Received ERROR msg 0xE0!");
 				msg = new MessageFactory().getMessage(MessageCode.ERROR, null);
 			}
 
@@ -338,7 +318,7 @@ public class MessageImpl implements Message
 	}
 	
 	@Override
-	public  Map<Path, Value> getValuesList(){
+	public Map<Path, Value> getValuesList(){
 		return valuesList;
 	}
 	
@@ -424,13 +404,6 @@ public class MessageImpl implements Message
 		return pretty;
 	}
 
-	
-	
-	public static void printHex(byte[] bytes) {
-		for(int i = 0 ; i <  bytes.length; i++)
-			System.out.print(Integer.toHexString(Byte.toUnsignedInt(bytes[i])) + " ");
-		System.out.println();
-	}
 
 	@Override
 	public Path getPath() {
@@ -462,7 +435,6 @@ public class MessageImpl implements Message
 	public void setValue(Value val) {
 		value = val;
 	}
-
 }
 
 class HeaderMessage extends MessageImpl {
@@ -512,7 +484,6 @@ class LogoutMessage extends MessageImpl {
 }
 
 class WorkspaceMessage extends MessageImpl {
-
 	
 	public WorkspaceMessage() {
 		

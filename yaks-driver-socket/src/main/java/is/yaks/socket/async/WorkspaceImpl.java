@@ -1,26 +1,27 @@
-package is.yaks.socket;
+package is.yaks.socket.async;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SocketChannel;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import is.yaks.Listener;
+import is.yaks.Message;
 import is.yaks.Path;
 import is.yaks.Selector;
 import is.yaks.Value;
-import is.yaks.Workspace;
 import is.yaks.YaksRuntime;
+import is.yaks.async.Workspace;
 import is.yaks.socket.messages.MessageFactory;
 import is.yaks.socket.utils.VLEEncoder;
-import is.yaks.Message;
 import is.yaks.utils.MessageCode;
 
 public class WorkspaceImpl implements Workspace {
-		
+	
 	public Path path =  null;
-	public int wsid = 0;
+	public CompletableFuture<Integer> wsid = null;
 	
     private static WorkspaceImpl instance;
     YaksRuntime rt = null;
@@ -38,35 +39,28 @@ public class WorkspaceImpl implements Workspace {
  	}
 
 	@Override
-	public boolean put(Path p, Value v, int quorum) {
+	public CompletableFuture<Boolean> put(Path p, Value v, int quorum) {
 		
-		boolean is_put_ok = false;
+		CompletableFuture<Boolean> is_put_ok = new CompletableFuture<Boolean>();
 
 		try {	
 			SocketChannel sock = YaksImpl.getChannel();
 			
 			Message putM = new  MessageFactory().getMessage(MessageCode.PUT, null);
-
 			putM.add_property(Message.WSID, String.valueOf(wsid));
 			putM.add_workspace(p, v);
 			putM.write(sock, putM);
 
 			//read response msg
 			ByteBuffer buffer = ByteBuffer.allocate(1);
-			
 			// Returns the number of bytes read, possibly zero, 
 			// or -1 if the channel has reached end-of-stream
-
 			int bytesRead = sock.read(buffer);
-			
-			
-			
-			
 			while (bytesRead > 0) {
 				Message msgReply = putM.read(sock, buffer);
 				if(msgReply !=null && msgReply.getMessageCode().equals(MessageCode.OK)) 
 				{
-					is_put_ok = true;
+					is_put_ok.complete(true);
 				}
 				buffer.clear();
 				bytesRead = sock.read(buffer);
@@ -78,14 +72,14 @@ public class WorkspaceImpl implements Workspace {
 	}
 
 	@Override
-	public void update() {
-		
+	public CompletableFuture<Void> update() {
+		return null;
 	}
 
 	@Override
-	public Map<Path, Value> get(Selector select) {
+	public CompletableFuture<Map<Path, Value>> get(Selector select, int quorum) {
 		
-		Map<Path, Value> kvs = null;
+		CompletableFuture<Map<Path, Value>> kvs = null;
 		try {	
 			SocketChannel sock = YaksImpl.getChannel();
 			
@@ -105,7 +99,6 @@ public class WorkspaceImpl implements Workspace {
 			
 			while (bytesRead > 0) {
 				
-				
 				// read the vle_length one byte at the time
 				buffer.flip();
 				byte lengthByte =  buffer.get();
@@ -124,9 +117,9 @@ public class WorkspaceImpl implements Workspace {
 				
 				if(msgReply !=null && msgReply.getMessageCode().equals(MessageCode.VALUES)) 
 				{	
-					if(!msgReply.getValuesList().isEmpty()){
+					if(!((Message) msgReply).getValuesList().isEmpty()){
 						
-						kvs = msgReply.getValuesList();
+						kvs.complete(msgReply.getValuesList());
 					}
 				}
 				buffer.clear();
@@ -139,9 +132,9 @@ public class WorkspaceImpl implements Workspace {
 	}
 
 	@Override
-	public boolean remove(Path path, int quorum) {
+	public CompletableFuture<Boolean> remove(Path path, int quorum) {
 		
-		boolean is_remove_ok = false;
+		CompletableFuture<Boolean> is_remove_ok = new CompletableFuture<Boolean>();
 		
 		try {	
 			SocketChannel sock = YaksImpl.getChannel();
@@ -166,7 +159,7 @@ public class WorkspaceImpl implements Workspace {
 				
 				if(msgReply.getMessageCode().equals(MessageCode.OK)) 
 				{	
-					is_remove_ok = true;
+					is_remove_ok.complete(true);
 				}
 			}
 			
@@ -177,8 +170,8 @@ public class WorkspaceImpl implements Workspace {
 	}
 
 	@Override
-	public String subscribe(Selector selector, Listener listener) {
-		String subid = "";
+	public CompletableFuture<String> subscribe(Selector selector, Listener listener) {
+		CompletableFuture<String> subid = new CompletableFuture<String>();
 		try {	
 			SocketChannel sock = YaksImpl.getChannel();
 			
@@ -189,10 +182,7 @@ public class WorkspaceImpl implements Workspace {
 			subscribeM.setPath(Path.ofString(selector.toString()));
 			
 			subscribeM.write(sock, subscribeM);
-			
-			
-			//==>
-			
+
 			//read response msg
 			ByteBuffer buffer = ByteBuffer.allocate(1);
 			sock.read(buffer);
@@ -200,7 +190,7 @@ public class WorkspaceImpl implements Workspace {
 			
 			if(msgReply.getMessageCode().equals(MessageCode.OK)) 
 			{
-				subid = (String)msgReply.getPropertiesList().get(Message.SUBID);
+				subid.complete(msgReply.getPropertiesList().get(Message.SUBID));
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -210,8 +200,8 @@ public class WorkspaceImpl implements Workspace {
 	}
 	
 	@Override
-	public String subscribe(Selector selector) {
-		String subid = "";
+	public CompletableFuture<String> subscribe(Selector selector) {
+		CompletableFuture<String> subid = new CompletableFuture<String>();
 		try {	
 			SocketChannel sock = YaksImpl.getChannel();
 			
@@ -222,9 +212,7 @@ public class WorkspaceImpl implements Workspace {
 			subscribeM.setPath(Path.ofString(selector.toString()));
 			
 			subscribeM.write(sock, subscribeM);
-			
-			//==>
-			
+
 			//read response msg
 			ByteBuffer buffer = ByteBuffer.allocate(1);
 			sock.read(buffer);
@@ -232,7 +220,7 @@ public class WorkspaceImpl implements Workspace {
 			
 			if(msgReply.getMessageCode().equals(MessageCode.OK)) 
 			{
-				subid = (String)msgReply.getPropertiesList().get(Message.SUBID);
+				subid.complete(msgReply.getPropertiesList().get(Message.SUBID));
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -242,8 +230,8 @@ public class WorkspaceImpl implements Workspace {
 	}
 
 	@Override
-	public boolean unsubscribe(String subid) {
-		boolean is_unsub_ok = false;
+	public CompletableFuture<Boolean> unsubscribe(String subid) {
+		CompletableFuture<Boolean> is_unsub_ok = new CompletableFuture<Boolean>();
 		try {	
 			SocketChannel sock = YaksImpl.getChannel();
 			
@@ -262,7 +250,7 @@ public class WorkspaceImpl implements Workspace {
 			
 			if(msgReply.getMessageCode().equals(MessageCode.OK)) 
 			{
-				is_unsub_ok = true;
+				is_unsub_ok.complete(true);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -271,8 +259,8 @@ public class WorkspaceImpl implements Workspace {
 	}
 
 	@Override
-	public void register_eval(Path path, Listener evcb) {
-		//TODO:
+	public CompletableFuture<Boolean> register_eval(Path path, Listener evcb) {
+		CompletableFuture<Boolean> is_regeval_ok = new CompletableFuture<Boolean>();
 		try {	
 			SocketChannel sock = YaksImpl.getChannel();
 			
@@ -288,19 +276,20 @@ public class WorkspaceImpl implements Workspace {
 			ByteBuffer buffer = ByteBuffer.allocate(1);
 			sock.read(buffer);
 			Message msgReply = regEvalM.read(sock, buffer);
-			
-//			if(msgReply.getMessageCode().equals(MessageCode.OK)) 
-//			{
-//				is_unsub_ok = true;
-//			}
+			if(msgReply.getMessageCode().equals(MessageCode.OK)) 
+			{
+				is_regeval_ok.complete(true);
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+		return is_regeval_ok;
 	}
 
 	@Override
-	public void unregister_eval(Path path) {
+	public CompletableFuture<Boolean> unregister_eval(Path path) {
+		
+		CompletableFuture<Boolean> is_unregeval_ok = new CompletableFuture<Boolean>();
 		try {	
 			SocketChannel sock = YaksImpl.getChannel();
 
@@ -312,23 +301,26 @@ public class WorkspaceImpl implements Workspace {
 
 			unreg_evalM.write(sock, unreg_evalM);
 
+
 			//read response msg
 			ByteBuffer buffer = ByteBuffer.allocate(1);
 			sock.read(buffer);
 			Message msgReply = unreg_evalM.read(sock, buffer);
 
-			//					if(msgReply.getMessageCode().equals(MessageCode.OK)) 
-			//					{
-			//						is_unsub_ok = true;
-			//					}
+			if(msgReply.getMessageCode().equals(MessageCode.OK)) 
+			{
+				is_unregeval_ok.complete(true);
+			}
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		return is_unregeval_ok;
 	}
 
 	@Override
-	public String eval(Selector selector) {
-		String values = "";
+	public CompletableFuture<String> eval(Selector selector) {
+		CompletableFuture<String> values = null;
 		try {	
 			SocketChannel sock = YaksImpl.getChannel();
 
@@ -349,8 +341,8 @@ public class WorkspaceImpl implements Workspace {
 			{
 				if(!msgReply.getValuesList().isEmpty()){
 					
-					for (Map.Entry<Path, Value> pair : msgReply.getValuesList().entrySet()) {
-						values += "(" + pair.getKey().toString() +", " +  pair.getValue().getValue().toString()+")";
+					for (Map.Entry<Path, Value> pair : ((Message) msgReply).getValuesList().entrySet()) {
+						values.complete("(" + pair.getKey().toString() +", " +  pair.getValue().getValue().toString()+")");
 					}
 				}
 			}
@@ -370,12 +362,13 @@ public class WorkspaceImpl implements Workspace {
 	}
 	
 	@Override
-	public void setWsid(int id) {
-		wsid = id;
+	public CompletableFuture<Void> setWsid(int id) {
+		wsid.complete(id);
+		return null;
 	}
 	
 	@Override
-	public int getWsid() {
+	public CompletableFuture<Integer> getWsid() {
 		return wsid;
 	}
 }

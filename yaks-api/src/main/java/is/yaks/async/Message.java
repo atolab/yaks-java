@@ -1,14 +1,14 @@
-package is.yaks.socketfe;
+package is.yaks.async;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import is.yaks.Path;
 import is.yaks.Selector;
 import is.yaks.Value;
+import is.yaks.utils.MessageCode;
 
 public interface Message 
 {
@@ -56,13 +56,21 @@ public interface Message
 	 * @param buffer
 	 * @return Message
 	 */
-	public Message read(SocketChannel sock, ByteBuffer buffer);
+	public CompletableFuture<Message> read(SocketChannel sock, ByteBuffer buffer);
+
+	/**
+	 * Set the message selector
+	 * @param selector
+	 */
+	public CompletableFuture<Void> add_selector(Selector selector);
 	
 	/**
-	 * Returns the message code
-	 * @return MessageCode
+	 * Add a workspace
+	 * @param path
+	 * @param value
 	 */
-	public MessageCode getMessageCode();
+	public CompletableFuture<Void> add_workspace(Path p, Value v);
+
 	
 	/**
 	 * Returns the set of tuples  *<path,value>* available in YAKS
@@ -81,6 +89,13 @@ public interface Message
 	 * @return list
 	 */
 	public Map<Path, Value> getWorkspaceList();
+	
+	
+	/**
+	 * Returns the message code
+	 * @return MessageCode
+	 */
+	public MessageCode getMessageCode();
 	
 	/**
 	 * Returns the flags of the message
@@ -107,12 +122,6 @@ public interface Message
 	public void setCorrelationId(int corr_id);
 	
 	/**
-	 * Set the message selector
-	 * @param selector
-	 */
-	public void add_selector(Selector selector);
-	
-	/**
 	 * Add a message's properties
 	 * @param key
 	 * @param value
@@ -125,13 +134,6 @@ public interface Message
 	 * @param value
 	 */
 	public void add_value(Path path, Value value);
-	
-	/**
-	 * Add a workspace
-	 * @param path
-	 * @param value
-	 */
-	public void add_workspace(Path p, Value v);
 	
 	/**
 	 * Get the path
@@ -167,7 +169,6 @@ public interface Message
 	 * @param value
 	 */
 	public void setValue(Value value);
-	
 
 }
 
@@ -176,11 +177,8 @@ interface Header{
 	static int P_FLAG 	 = 0x01;
 	static int FLAG_MASK = 0x01;
 	
-	
 	boolean has_flag();
-	
 	boolean has_properties();
-	
 	
 }
 
