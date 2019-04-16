@@ -1,7 +1,9 @@
 package is.yaks.socket.utils;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.SocketChannel;
 
 public class VLEEncoder 
 {	
@@ -16,12 +18,13 @@ public class VLEEncoder
 	public static final byte MAX_BITS 		 = 64;
 	/** 10 =>  0b1010 */
 	public static final byte MAX_BYTES		 = 10;
-	
+
 	public static final int MAX_BYTES_MASK   = 0xFF;
-	
+
+
 	// private constructor
 	private VLEEncoder(){}
-	
+
 	public static synchronized VLEEncoder getInstance() 
 	{
 		if( instance == null ) 
@@ -30,7 +33,7 @@ public class VLEEncoder
 		}
 		return instance;
 	} 
-	
+
 	public static byte[] encode(int input) 
 	{	
 		// first find out how many bytes we need to represent the integer
@@ -51,20 +54,63 @@ public class VLEEncoder
 		output[length-1] &= 0b01111111; 
 		return output;
 	}
-	
+
 	public static int decode(byte[] buff) 
 	{				
 		int value = 0;
-		
+
 		ByteBuffer bb = ByteBuffer.wrap(buff).order(ByteOrder.BIG_ENDIAN);
-		
+
 		for(int i =0; i < buff.length; i++) 
 		{		     
 			int v = bb.get(i) & 0x7F;
-		     
-		    value = value | (v << (7 * i));	
+
+			value = value | (v << (7 * i));	
 		}
-		
+
 		return value;
 	}
+
+
+	public static int read_vle(SocketChannel socketChannel) 
+	{
+		int vle = 0;
+		try {
+			ByteBuffer bs = ByteBuffer.allocate(1);
+			while(socketChannel.read(bs) > 0) {
+				bs.flip();
+				byte currentByte = bs.get();
+				ByteBuffer byteVle = null;
+				while((currentByte & VLEEncoder.MORE_BYTES_FLAG) !=0) 
+				{	
+					byteVle = ByteBuffer.allocate(VLEEncoder.MAX_BYTES).order(ByteOrder.BIG_ENDIAN);
+					byteVle.put((byte) (currentByte));
+					bs.clear();
+					socketChannel.read(bs);
+					currentByte = bs.get();
+				}	
+				if(byteVle != null) {
+					vle = VLEEncoder.decode(byteVle.array());
+				} else {
+					vle = currentByte;
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} 
+		return vle;
+	}
+	
+	public static int read_correlation_id(ByteBuffer buffer) 
+	{
+		byte curByte = buffer.get();
+		ByteBuffer bb = ByteBuffer.allocate(VLEEncoder.MAX_BYTES).order(ByteOrder.BIG_ENDIAN);
+		while((curByte & VLEEncoder.MORE_BYTES_FLAG) !=0) {
+			bb.put((byte) (curByte));
+			curByte = buffer.get();
+		}			
+		bb.put(curByte);
+		return VLEEncoder.decode(bb.array()); // decode the correlation_id
+	}
+	
 }

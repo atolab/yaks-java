@@ -77,20 +77,17 @@ public class AdminImpl implements Admin {
 	@Override
 	public CompletableFuture<Boolean> add_storage(String stid, Properties properties, String beid, Yaks yaks) {
 		
-		CompletableFuture<Boolean> is_reply_ok = null;
-		
-		if(beid.isEmpty()) {
+		if(beid.isEmpty()) 
+		{
 			beid = "auto";
 		}
+		
 		String p = "/"+Admin.PREFIX+"/"+Admin.MY_YAKS+"/backend/"+beid+"/storage/"+stid;
 		
 		Value v = new Value(properties.toString() , Encoding.PROPERTY);
-
-		int quorum = 1;
 		
-		is_reply_ok = workspace.put(Path.ofString(p), v, quorum);
+		return workspace.put(Path.ofString(p), v, quorum);
 		
-		return CompletableFuture.supplyAsync(()->false);
 	}
 
 	@Override
@@ -105,7 +102,7 @@ public class AdminImpl implements Admin {
 
 	@Override
 	public CompletableFuture<Boolean> remove_storage(String stid, Yaks yaks) {
-		CompletableFuture<Boolean> is_remove_ok = null;
+		CompletableFuture<Boolean> is_remove_ok = new CompletableFuture<Boolean>();
 
 		String p = "/"+Admin.PREFIX+"/"+Admin.MY_YAKS+"/backend/*/storage/"+stid;
 	
@@ -118,7 +115,7 @@ public class AdminImpl implements Admin {
 //			    is_remove_ok = workspace.remove(pair.getKey(), quorum);	
 //			}
 //		}
-		return CompletableFuture.supplyAsync(()->false);
+		return is_remove_ok;
 	}
 
 	@Override

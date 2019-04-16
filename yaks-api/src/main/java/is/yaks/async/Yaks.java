@@ -64,7 +64,7 @@ public interface Yaks {
      * Creates an admin workspace that provides helper operations to
      * administer Yaks.
      */
-    public Admin admin();
+    public CompletableFuture<Admin> admin();
         
     /**
      * Creates a workspace relative to the provided **path**.
@@ -72,7 +72,7 @@ public interface Yaks {
      * will be prepended with the workspace *path*.
      * 
      */
-    public Workspace workspace(Path path);
+    public CompletableFuture<Workspace> workspace(Path path);
     
     /**
      * Closes the Yaks api

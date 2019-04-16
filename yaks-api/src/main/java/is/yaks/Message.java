@@ -57,7 +57,7 @@ public interface Message
 	 * @param buffer
 	 * @return Message
 	 */
-	public Message read(SocketChannel sock, ByteBuffer buffer);
+	public Message read(ByteBuffer buffer);
 	
 	/**
 	 * Returns the message code

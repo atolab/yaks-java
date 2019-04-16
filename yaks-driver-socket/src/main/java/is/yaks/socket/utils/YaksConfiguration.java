@@ -23,8 +23,6 @@ public class YaksConfiguration {
 	private Gson gson;
 	private BufferedReader input = null;
 
-	
-
     // first load at the call of YaksConfiguration.getInstance()
     // work in multithread env
     public static YaksConfiguration getInstance() {

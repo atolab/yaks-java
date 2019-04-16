@@ -148,8 +148,11 @@ public interface Workspace {
 	 */
 	public CompletableFuture<String> eval(Selector selector);
 	
-	public CompletableFuture<Integer> getWsid();
 	
-	public CompletableFuture<Void> setWsid(int id);
+	
+	
+	public int getWsid();
+	
+	public void setWsid(int id);
 
 }

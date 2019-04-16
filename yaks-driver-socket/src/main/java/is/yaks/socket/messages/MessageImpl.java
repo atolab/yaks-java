@@ -3,18 +3,16 @@ package is.yaks.socket.messages;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
 
 import is.yaks.Encoding;
+import is.yaks.Message;
 import is.yaks.Path;
 import is.yaks.Selector;
 import is.yaks.Value;
-import is.yaks.Message;
 import is.yaks.socket.utils.Utils;
 import is.yaks.socket.utils.VLEEncoder;
 import is.yaks.utils.MessageCode;
@@ -140,163 +138,88 @@ public class MessageImpl implements Message
 	}
 
 	@Override
-	public Message read(SocketChannel sock, ByteBuffer buffer){
+	public Message read(ByteBuffer buffer){
 		
+		Value value;
 		
 		Message msg = new MessageImpl();
 
-		try {
-			int msgSize = VLEEncoder.decode(buffer.array()); // decode the vle length
-			
-			ByteBuffer bytesData = ByteBuffer.allocate(msgSize);
-			sock.read(bytesData.order(ByteOrder.BIG_ENDIAN));
-			bytesData.flip();  
-
-			int msgCode = bytesData.get();
-
-			if ((msgCode & 0xFF) == 0xD0) {
-//				System.out.println("Received OK msg 0xD0!");
-				msg = new MessageFactory().getMessage(MessageCode.OK, null);
-				propertiesList = new HashMap<String, String>();
-				int flags = (int) bytesData.get(); //get the flags from the msg
-				msg.setFlags(flags);
-				// read the vle correlation_id one byte at the time
-				
-				byte curByte = bytesData.get();
-				ByteBuffer bb = ByteBuffer.allocate(VLEEncoder.MAX_BYTES).order(ByteOrder.BIG_ENDIAN);
-				while((curByte & VLEEncoder.MORE_BYTES_FLAG) !=0) {
-					bb.put((byte) (curByte));
-					curByte = bytesData.get();
-				}			
-				bb.put(curByte);
-				int corr_id = VLEEncoder.decode(bb.array()); // decode the correlation id
-				msg.setCorrelationId(corr_id);
-				
-				if(msg.getFlags() == 1) {
-					
-					int length_properties = (int) bytesData.get(); // get length_properties
-							
-					if(length_properties > 0x00) 					
-					{
-						byte[] value_bytes = new  byte[length_properties];
-						bytesData.get(value_bytes, 0, length_properties);
-						
-						String strKey = "", strValue = "";
-						try {
-							strValue = new String(value_bytes, "UTF-8");
-						} catch (UnsupportedEncodingException e) {
-							e.printStackTrace();
-						}
-						strKey = strValue.substring(0, strValue.indexOf("="));
-						strValue = strValue.substring(strValue.indexOf("=")+1);
-//						System.out.println("Decoded key: "+ strKey+ " decoded-value:"+ strValue);
-						propertiesList.put(strKey, strValue);
-						msg.add_property(strKey, strValue);
-						
-					}
-				}
-				
-			} else if ((msgCode & 0xFF) == 0xD1) {
-//				System.out.println("Received VALUES msg 0xD1!");
-				msg = new MessageFactory().getMessage(MessageCode.VALUES, null);
-				Value value; 
-				
-				int flags = (int) bytesData.get(); //get the flags from the msg
-				msg.setFlags(flags);
-				// read the vle correlation_id one byte at the time
-				byte curByte = bytesData.get();
-				ByteBuffer bb = ByteBuffer.allocate(VLEEncoder.MAX_BYTES).order(ByteOrder.BIG_ENDIAN);
-				while((curByte & VLEEncoder.MORE_BYTES_FLAG) !=0) {
-					bb.put((byte) (curByte));
-					curByte = bytesData.get();
-				}			
-				bb.put(curByte);
-				int corr_id = VLEEncoder.decode(bb.array()); // decode the correlation id
-				msg.setCorrelationId(corr_id);
-				
-				
-				int valFormat = (bytesData.get() & 0xFF); //read 0x81 = 129
-				bytesData.get();  // reads out the 0x00
-				
-				if(valFormat > 0x80) {
-					
-					while(bytesData.hasRemaining()) 
-					{
-						int length_key = (int) bytesData.get();
-						byte[] key_bytes = new  byte[length_key];
-						bytesData.get(key_bytes, 0, length_key);
-						
-						int val_encoding = (int) bytesData.get();
-						if (val_encoding == 0x01) {
-							byte[] val_format = new byte[2]; // gets the 0x01 0x20
-							bytesData.get(val_format, 0, 2); 
-						}
-						int length_value  = (int) bytesData.get();
-						byte[] value_bytes =  new byte[length_value];
-						bytesData.get(value_bytes, 0, length_value);
-						String strKey = "", strValue = "";
-						try {
-							strKey = new String(key_bytes, "UTF-8");
-							strValue = new String(value_bytes, "UTF-8");
-						} catch (UnsupportedEncodingException e) {
-							e.printStackTrace();
-						}
-//						System.out.println("Decoded key: "+ strKey+ " decoded-value: "+ strValue + " Encoding: "+val_encoding);
-						value = new Value();
-						value.setValue(strValue);
-						value.setEncoding(Encoding.getEncoding(val_encoding));
-						msg.add_value(Path.ofString(strKey), value);
-					}
-				}
-				
-				
-			} else if ((msgCode & 0xFF) == 0xB2) {
-//				System.out.println("Received NOTIFY msg 0xB2!");
-				msg = new MessageFactory().getMessage(MessageCode.NOTIFY, null);
-				propertiesList = new HashMap<String, String>();
-				int flags = (int) bytesData.get(); //get the flags from the msg
-				msg.setFlags(flags);
-				// read the vle correlation_id one byte at the time
-				byte curByte = bytesData.get();
-				ByteBuffer bb = ByteBuffer.allocate(VLEEncoder.MAX_BYTES).order(ByteOrder.BIG_ENDIAN);
-				while((curByte & VLEEncoder.MORE_BYTES_FLAG) !=0) {
-					bb.put((byte) (curByte));
-					curByte = bytesData.get();
-				}			
-				bb.put(curByte);
-				int corr_id = VLEEncoder.decode(bb.array()); // decode the correlation id
-				msg.setCorrelationId(corr_id);
-				
-				if(msg.getFlags() == 1) {
-					
-					int length_properties = (int) bytesData.get(); // get length_properties
-					if(length_properties > 0x00) 					
-					{
-						byte[] key_bytes = new  byte[length_properties];
-						bytesData.get(key_bytes, 0, length_properties);
-						
-						String strKey = "", strValue = "";
-						try {
-							strKey = new String(key_bytes, "UTF-8");
-						} catch (UnsupportedEncodingException e) {
-							e.printStackTrace();
-						}
-						strKey = strValue.substring(0, strValue.indexOf("="));
-						strValue = strValue.substring(strValue.indexOf("=")+1);
-//						System.out.println("Decoded key: "+ strKey+ " decoded value:"+ strValue);
-						propertiesList.put(strKey, strValue);
-						msg.add_property(strKey, strValue);
-					}
-				} 
-				
-			} else if ((msgCode & 0xFF) == 0xE0) {
-//				System.out.println("Received ERROR msg 0xE0!");
-				msg = new MessageFactory().getMessage(MessageCode.ERROR, null);
-			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
+		buffer.flip();
+		int msgCode = ((int)buffer.get() & 0xFF);
+		switch (msgCode) {
+			case 0xD0:  msg = new MessageFactory().getMessage(MessageCode.OK, null);
+						break;
+			case 0xD1:  msg = new MessageFactory().getMessage(MessageCode.VALUES, null);
+						break;
+			case 0xB2:	msg = new MessageFactory().getMessage(MessageCode.NOTIFY, null);
+						break;
+			case 0xE0:  msg = new MessageFactory().getMessage(MessageCode.ERROR, null);
+						break;
+			default: break;
 		}
+		
+		propertiesList = new HashMap<String, String>();
+		
+		msg.setFlags((int) buffer.get()); 								// get the flags of the msg
+		
+		msg.setCorrelationId(VLEEncoder.read_correlation_id(buffer)); 	// get the correlation_id (vle)
+		
+		if ((msgCode == 0xD0) || (msgCode == 0xB2)) {
+			if(msg.getFlags() == 1) {
+				int length_properties = (int) buffer.get(); // get length_properties
+				if(length_properties > 0) 					
+				{
+					byte[] key_bytes = new  byte[length_properties];
+					buffer.get(key_bytes, 0, length_properties);
+
+					String strKey = "", strValue = "";
+					try {
+						strValue = new String(key_bytes, "UTF-8");
+					} catch (UnsupportedEncodingException e) {
+						e.printStackTrace();
+					}
+					strKey = strValue.substring(0, strValue.indexOf("="));
+					strValue = strValue.substring(strValue.indexOf("=")+1);
+					System.out.println("Decoded key:["+ strKey+ "] value:["+ strValue+"]");
+
+					propertiesList.put(strKey, strValue);
+					msg.add_property(strKey, strValue);
+				}
+			}
+		}
+		if (msgCode == 0xD1){
+			int valFormat = (buffer.get() & 0xFF); 	//read 0x81 = 129
+			buffer.get();  							// reads out the 0x00
+			if(valFormat > 0x80) {
+				while(buffer.hasRemaining()) 
+				{
+					int length_key = (int) buffer.get();
+					byte[] key_bytes = new  byte[length_key];
+					buffer.get(key_bytes, 0, length_key);
+					
+					int val_encoding = (int) buffer.get();
+					if (val_encoding == 0x01) {
+						byte[] val_format = new byte[2]; // gets the 0x01 0x20
+						buffer.get(val_format, 0, 2); 
+					}
+					int length_value  = (int) buffer.get();
+					byte[] value_bytes =  new byte[length_value];
+					buffer.get(value_bytes, 0, length_value);
+					String strKey = "", strValue = "";
+					try {
+						strKey = new String(key_bytes, "UTF-8");
+						strValue = new String(value_bytes, "UTF-8");
+					} catch (UnsupportedEncodingException e) {
+						e.printStackTrace();
+					}
+					System.out.println("Decoded key:["+ strKey+ "] value:["+ strValue + "] encoding:["+val_encoding+"]");
+					value = new Value();
+					value.setValue(strValue);
+					value.setEncoding(Encoding.getEncoding(val_encoding));
+					msg.add_value(Path.ofString(strKey), value);
+				}
+			}
+		} 
 		return msg;
 	}
 
