@@ -6,10 +6,9 @@ import java.util.concurrent.ExecutionException;
 
 import is.yaks.Path;
 import is.yaks.Value;
-import is.yaks.async.Workspace;
-import is.yaks.async.Yaks;
-import is.yaks.async.Admin;
-import is.yaks.socket.async.YaksImpl;
+import is.yaks.Workspace;
+import is.yaks.Yaks;
+import is.yaks.socket.YaksImpl;
 
 public class LatencyTest {
 	
@@ -17,7 +16,7 @@ public class LatencyTest {
     
 	private static Yaks yaks;
     private static Workspace ws;
-    private static Admin admin;
+
 
     public void init() throws InterruptedException, ExecutionException {
 		yaks =  YaksImpl.getInstance();
@@ -28,10 +27,9 @@ public class LatencyTest {
 		properties.setProperty("cacheSize", "1024");
 
         if (yaks != null) {
-        	System.out.println(">> login");		
+        	//login to yaks api
     		yaks = yaks.login(properties);
-    		//creates an admin & workspace
-    		admin = yaks.admin();
+    		//creates workspace
 	        ws = yaks.workspace(Path.ofString("/"));
         }
     }
@@ -59,14 +57,19 @@ public class LatencyTest {
     	put_n(samples, ws, path, val);
     	long stop = System.currentTimeMillis();
     	long delta = stop - start;
-    	System.out.println("Throughput: "+ (samples / delta) +"\n");
+    	System.out.println("Throughput: "+ ((double)samples / delta)*1000 +" msg/sec \n");
     }	
     
 	public static void main(String[] args) {
 		LatencyTest lt = new LatencyTest();
 		try {		
+			
 			lt.init();
-			lt.runPut(10000, 1024);			
+			long start = System.currentTimeMillis();
+			lt.runPut(10000, 1024);
+			long stop = System.currentTimeMillis();
+			long delta = stop - start;
+			System.out.println("Latency: 10000 puts of msg-size = 1024bytes, time: "+ delta +" ms \n");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

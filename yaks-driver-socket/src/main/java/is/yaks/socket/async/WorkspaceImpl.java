@@ -11,7 +11,7 @@ import is.yaks.Message;
 import is.yaks.Path;
 import is.yaks.Selector;
 import is.yaks.Value;
-import is.yaks.YaksRuntime;
+import is.yaks.async.Yaks;
 import is.yaks.async.Workspace;
 import is.yaks.socket.messages.MessageFactory;
 import is.yaks.socket.utils.VLEEncoder;
@@ -24,9 +24,12 @@ public class WorkspaceImpl implements Workspace {
 
 	private static WorkspaceImpl instance;
 	YaksRuntime rt = null;
+	static SocketChannel sock = null;
 
-
-	public WorkspaceImpl(){}
+	public WorkspaceImpl(){
+		Yaks yaks = YaksImpl.getInstance();
+		sock = yaks.getChannel();
+	}
 
 	public static synchronized Workspace getInstance() 
 	{
@@ -41,30 +44,29 @@ public class WorkspaceImpl implements Workspace {
 	public CompletableFuture<Boolean> put(Path p, Value v, int quorum) {
 
 		CompletableFuture<Boolean> is_put_ok = new CompletableFuture<Boolean>();
-
 		try {	
-			SocketChannel sock = YaksImpl.getChannel();
-
 			Message putM = new  MessageFactory().getMessage(MessageCode.PUT, null);
 			putM.add_property(Message.WSID, String.valueOf(wsid));
 			putM.add_workspace(p, v);
-			putM.write(sock, putM);
-			//==>			
-			int vle = 0;
-			while(vle == 0) {
-				vle = VLEEncoder.read_vle(sock);
-				Thread.sleep(YaksImpl.TIMEOUT);
-			}
-			if(vle > 0) {
-				//	read response msg
-				System.out.println("==> [vle-put]:" +vle);
-				ByteBuffer buffer = ByteBuffer.allocate(vle);
-				sock.read(buffer);
-				Message msgReply = putM.read(buffer);
+			if(sock!=null) {
+				putM.write(sock, putM);
+				//==>			
+				int vle = 0;
+				while(vle == 0) {
+					vle = VLEEncoder.read_vle(sock);
+					Thread.sleep(YaksImpl.TIMEOUT);
+				}
+				if(vle > 0) {
+					//	read response msg
+					System.out.println("==> [vle-put]:" +vle);
+					ByteBuffer buffer = ByteBuffer.allocate(vle);
+					sock.read(buffer);
+					Message msgReply = putM.read(buffer);
 
-				if((msgReply !=null) && (msgReply.getMessageCode().equals(MessageCode.OK))) 
-				{
-					is_put_ok.complete(true);
+					if((msgReply !=null) && (msgReply.getMessageCode().equals(MessageCode.OK))) 
+					{
+						is_put_ok.complete(true);
+					}
 				}
 			}
 		} catch (IOException e) {
@@ -85,32 +87,34 @@ public class WorkspaceImpl implements Workspace {
 
 		CompletableFuture<Map<Path, Value>> kvs = new CompletableFuture<Map<Path, Value>>();
 		try {	
-			SocketChannel sock = YaksImpl.getChannel();
+
 
 			Message getM = new  MessageFactory().getMessage(MessageCode.GET, null);
 
 			getM.add_property(Message.WSID, String.valueOf(wsid));
 			getM.add_selector(select);
-			getM.write(sock, getM);
+			if(sock!=null) {
+				getM.write(sock, getM);
 
-			//==>			
-			int vle = 0;
-			while(vle == 0) {
-				vle = VLEEncoder.read_vle(sock);
-				Thread.sleep(YaksImpl.TIMEOUT);
-			}
-			if(vle > 0) {
-				//	read response msg
-				System.out.println("==> [vle-get]:" +vle);
-				ByteBuffer buffer = ByteBuffer.allocate(vle);
-				sock.read(buffer);
-				Message msgReply = getM.read(buffer);
+				//==>			
+				int vle = 0;
+				while(vle == 0) {
+					vle = VLEEncoder.read_vle(sock);
+					Thread.sleep(YaksImpl.TIMEOUT);
+				}
+				if(vle > 0) {
+					//	read response msg
+					System.out.println("==> [vle-get]:" +vle);
+					ByteBuffer buffer = ByteBuffer.allocate(vle);
+					sock.read(buffer);
+					Message msgReply = getM.read(buffer);
 
-				if((msgReply !=null) && (msgReply.getMessageCode().equals(MessageCode.VALUES))) 
-				{	
-					if(!((Message) msgReply).getValuesList().isEmpty())
-					{
-						kvs.complete(msgReply.getValuesList());
+					if((msgReply !=null) && (msgReply.getMessageCode().equals(MessageCode.VALUES))) 
+					{	
+						if(!((Message) msgReply).getValuesList().isEmpty())
+						{
+							kvs.complete(msgReply.getValuesList());
+						}
 					}
 				}
 			}
@@ -128,30 +132,31 @@ public class WorkspaceImpl implements Workspace {
 		CompletableFuture<Boolean> is_remove_ok = new CompletableFuture<Boolean>();
 
 		try {	
-			SocketChannel sock = YaksImpl.getChannel();
 
 			Message deleteM = new  MessageFactory().getMessage(MessageCode.DELETE, null);
 
 			deleteM.add_property(Message.WSID, String.valueOf(wsid));
 			deleteM.setPath(path);
-			deleteM.write(sock, deleteM);
+			if(sock!=null) {
+				deleteM.write(sock, deleteM);
 
-			//==>			
-			int vle = 0;
-			while(vle == 0) {
-				vle = VLEEncoder.read_vle(sock);
-				Thread.sleep(YaksImpl.TIMEOUT);
-			}
-			if(vle > 0) {
-				//	read response msg
-				System.out.println("==> [vle-remove]:" +vle);
-				ByteBuffer buffer2 = ByteBuffer.allocate(vle);
-				sock.read(buffer2);
-				Message msgReply = deleteM.read(buffer2);
+				//==>			
+				int vle = 0;
+				while(vle == 0) {
+					vle = VLEEncoder.read_vle(sock);
+					Thread.sleep(YaksImpl.TIMEOUT);
+				}
+				if(vle > 0) {
+					//	read response msg
+					System.out.println("==> [vle-remove]:" +vle);
+					ByteBuffer buffer2 = ByteBuffer.allocate(vle);
+					sock.read(buffer2);
+					Message msgReply = deleteM.read(buffer2);
 
-				if(msgReply.getMessageCode().equals(MessageCode.OK)) 
-				{	
-					is_remove_ok.complete(true);
+					if(msgReply.getMessageCode().equals(MessageCode.OK)) 
+					{	
+						is_remove_ok.complete(true);
+					}
 				}
 			}
 		} catch (IOException e) {
@@ -166,28 +171,30 @@ public class WorkspaceImpl implements Workspace {
 	public CompletableFuture<String> subscribe(Selector selector, Listener listener) {
 		CompletableFuture<String> subid = new CompletableFuture<String>();
 		try {	
-			SocketChannel sock = YaksImpl.getChannel();
+
 			Message subscribeM = new  MessageFactory().getMessage(MessageCode.SUB, null);
 			subscribeM.add_property(Message.WSID, String.valueOf(wsid));
 			subscribeM.setPath(Path.ofString(selector.toString()));
-			subscribeM.write(sock, subscribeM);
+			if(sock!=null) {
+				subscribeM.write(sock, subscribeM);
 
-			//==>			
-			int vle = 0;
-			while(vle == 0) {
-				vle = VLEEncoder.read_vle(sock);
-				Thread.sleep(YaksImpl.TIMEOUT);
-			}
-			if(vle > 0) {
-				//	read response msg
-				System.out.println("==> [vle-subscribe]:" +vle);
-				ByteBuffer buffer = ByteBuffer.allocate(vle);
-				sock.read(buffer);
-				Message msgReply = subscribeM.read(buffer);
+				//==>			
+				int vle = 0;
+				while(vle == 0) {
+					vle = VLEEncoder.read_vle(sock);
+					Thread.sleep(YaksImpl.TIMEOUT);
+				}
+				if(vle > 0) {
+					//	read response msg
+					System.out.println("==> [vle-subscribe]:" +vle);
+					ByteBuffer buffer = ByteBuffer.allocate(vle);
+					sock.read(buffer);
+					Message msgReply = subscribeM.read(buffer);
 
-				if(msgReply.getMessageCode().equals(MessageCode.OK)) 
-				{
-					subid.complete(msgReply.getPropertiesList().get(Message.SUBID));
+					if(msgReply.getMessageCode().equals(MessageCode.OK)) 
+					{
+						subid.complete(msgReply.getPropertiesList().get(Message.SUBID));
+					}
 				}
 			}
 		} catch (IOException e) {
@@ -203,29 +210,30 @@ public class WorkspaceImpl implements Workspace {
 	public CompletableFuture<String> subscribe(Selector selector) {
 		CompletableFuture<String> subid = new CompletableFuture<String>();
 		try {	
-			SocketChannel sock = YaksImpl.getChannel();
 
 			Message subscribeM = new  MessageFactory().getMessage(MessageCode.SUB, null);
 			subscribeM.add_property(Message.WSID, String.valueOf(wsid));
 			subscribeM.setPath(Path.ofString(selector.toString()));
-			subscribeM.write(sock, subscribeM);
+			if(sock!=null) {
+				subscribeM.write(sock, subscribeM);
 
-			//==>			
-			int vle = 0;
-			while(vle == 0) {
-				vle = VLEEncoder.read_vle(sock);
-				Thread.sleep(YaksImpl.TIMEOUT);
-			} 
-			if(vle > 0) {
-				//	read response msg
-				System.out.println("==> [vle-subscribe]:" +vle);
-				ByteBuffer buffer = ByteBuffer.allocate(vle);
-				sock.read(buffer);
-				Message msgReply = subscribeM.read(buffer);
+				//==>			
+				int vle = 0;
+				while(vle == 0) {
+					vle = VLEEncoder.read_vle(sock);
+					Thread.sleep(YaksImpl.TIMEOUT);
+				} 
+				if(vle > 0) {
+					//	read response msg
+					System.out.println("==> [vle-subscribe]:" +vle);
+					ByteBuffer buffer = ByteBuffer.allocate(vle);
+					sock.read(buffer);
+					Message msgReply = subscribeM.read(buffer);
 
-				if(msgReply.getMessageCode().equals(MessageCode.OK)) 
-				{
-					subid.complete(msgReply.getPropertiesList().get(Message.SUBID));
+					if(msgReply.getMessageCode().equals(MessageCode.OK)) 
+					{
+						subid.complete(msgReply.getPropertiesList().get(Message.SUBID));
+					}
 				}
 			}
 		} catch (IOException e) {
@@ -241,27 +249,29 @@ public class WorkspaceImpl implements Workspace {
 	public CompletableFuture<Boolean> unsubscribe(String subid) {
 		CompletableFuture<Boolean> is_unsub_ok = new CompletableFuture<Boolean>();
 		try {	
-			SocketChannel sock = YaksImpl.getChannel();
+
 			Message unsubM = new  MessageFactory().getMessage(MessageCode.UNSUB, null);
 			unsubM.add_property(Message.WSID, String.valueOf(wsid));
 			unsubM.setPath(Path.ofString(subid.toString()));
-			unsubM.write(sock, unsubM);
-			//==>			
-			int vle = 0;
-			while(vle == 0) {
-				vle = VLEEncoder.read_vle(sock);
-				Thread.sleep(YaksImpl.TIMEOUT);
-			} 
-			if(vle > 0) {
-				//read response msg
-				System.out.println("==> [vle-unsubscribe]:" +vle);
-				ByteBuffer buffer = ByteBuffer.allocate(vle);
-				sock.read(buffer);
-				Message msgReply = unsubM.read(buffer);
+			if(sock!=null) {
+				unsubM.write(sock, unsubM);
+				//==>			
+				int vle = 0;
+				while(vle == 0) {
+					vle = VLEEncoder.read_vle(sock);
+					Thread.sleep(YaksImpl.TIMEOUT);
+				} 
+				if(vle > 0) {
+					//read response msg
+					System.out.println("==> [vle-unsubscribe]:" +vle);
+					ByteBuffer buffer = ByteBuffer.allocate(vle);
+					sock.read(buffer);
+					Message msgReply = unsubM.read(buffer);
 
-				if(msgReply.getMessageCode().equals(MessageCode.OK)) 
-				{
-					is_unsub_ok.complete(true);
+					if(msgReply.getMessageCode().equals(MessageCode.OK)) 
+					{
+						is_unsub_ok.complete(true);
+					}
 				}
 			}
 		} catch (IOException e) {
@@ -276,27 +286,29 @@ public class WorkspaceImpl implements Workspace {
 	public CompletableFuture<Boolean> register_eval(Path path, Listener evcb) {
 		CompletableFuture<Boolean> is_regeval_ok = new CompletableFuture<Boolean>();
 		try {	
-			SocketChannel sock = YaksImpl.getChannel();
+
 			Message regEvalM = new  MessageFactory().getMessage(MessageCode.REG_EVAL, null);
 			regEvalM.add_property(Message.WSID, String.valueOf(wsid));
 			regEvalM.setPath(Path.ofString(path.toString()));
-			regEvalM.write(sock, regEvalM);
-			//==>			
-			int vle = 0;
-			while(vle == 0) {
-				vle = VLEEncoder.read_vle(sock);
-				Thread.sleep(YaksImpl.TIMEOUT);
-			} 			
-			if(vle > 0) {
-				//read response msg
-				System.out.println("==> [vle-reg_eval]:" +vle);
-				ByteBuffer buffer = ByteBuffer.allocate(vle);
-				sock.read(buffer);
-				Message msgReply = regEvalM.read(buffer);
+			if(sock!=null) {
+				regEvalM.write(sock, regEvalM);
+				//==>			
+				int vle = 0;
+				while(vle == 0) {
+					vle = VLEEncoder.read_vle(sock);
+					Thread.sleep(YaksImpl.TIMEOUT);
+				} 			
+				if(vle > 0) {
+					//read response msg
+					System.out.println("==> [vle-reg_eval]:" +vle);
+					ByteBuffer buffer = ByteBuffer.allocate(vle);
+					sock.read(buffer);
+					Message msgReply = regEvalM.read(buffer);
 
-				if(msgReply.getMessageCode().equals(MessageCode.OK)) 
-				{
-					is_regeval_ok.complete(true);
+					if(msgReply.getMessageCode().equals(MessageCode.OK)) 
+					{
+						is_regeval_ok.complete(true);
+					}
 				}
 			}
 		} catch (IOException e) {
@@ -312,28 +324,30 @@ public class WorkspaceImpl implements Workspace {
 
 		CompletableFuture<Boolean> is_unregeval_ok = new CompletableFuture<Boolean>();
 		try {	
-			SocketChannel sock = YaksImpl.getChannel();
+
 			Message unreg_evalM = new  MessageFactory().getMessage(MessageCode.UNREG_EVAL, null);
 			unreg_evalM.add_property(Message.WSID, String.valueOf(wsid));
 			unreg_evalM.setPath(Path.ofString(path.toString()));
-			unreg_evalM.write(sock, unreg_evalM);
+			if(sock!=null) {
+				unreg_evalM.write(sock, unreg_evalM);
 
-			//==>			
-			int vle = 0;
-			while(vle == 0) {
-				vle = VLEEncoder.read_vle(sock);
-				Thread.sleep(YaksImpl.TIMEOUT);
-			} 
-			if(vle > 0) {
-				//read response msg
-				System.out.println("==> [vle-unreg_eval]:" +vle);
-				ByteBuffer buffer = ByteBuffer.allocate(vle);
-				sock.read(buffer);
-				Message msgReply = unreg_evalM.read(buffer);
+				//==>			
+				int vle = 0;
+				while(vle == 0) {
+					vle = VLEEncoder.read_vle(sock);
+					Thread.sleep(YaksImpl.TIMEOUT);
+				} 
+				if(vle > 0) {
+					//read response msg
+					System.out.println("==> [vle-unreg_eval]:" +vle);
+					ByteBuffer buffer = ByteBuffer.allocate(vle);
+					sock.read(buffer);
+					Message msgReply = unreg_evalM.read(buffer);
 
-				if(msgReply.getMessageCode().equals(MessageCode.OK)) 
-				{
-					is_unregeval_ok.complete(true);
+					if(msgReply.getMessageCode().equals(MessageCode.OK)) 
+					{
+						is_unregeval_ok.complete(true);
+					}
 				}
 			}
 		} catch (IOException e) {
@@ -348,32 +362,33 @@ public class WorkspaceImpl implements Workspace {
 	public CompletableFuture<String> eval(Selector selector) {
 		CompletableFuture<String> values = null;
 		try {	
-			SocketChannel sock = YaksImpl.getChannel();
 
 			Message evalM = new  MessageFactory().getMessage(MessageCode.EVAL, null);
 			evalM.add_property(Message.WSID, String.valueOf(wsid));
 			evalM.setSelector(selector);
-			evalM.write(sock, evalM);
+			if(sock!=null) {
+				evalM.write(sock, evalM);
 
-			//==>			
-			int vle = 0;
-			while(vle == 0) {
-				vle = VLEEncoder.read_vle(sock);
-				Thread.sleep(YaksImpl.TIMEOUT);
-			} 
-			if(vle > 0) {
-				//read response msg
-				System.out.println("==> [vle-eval]:" +vle);
-				ByteBuffer buffer = ByteBuffer.allocate(vle);
-				sock.read(buffer);
-				Message msgReply = evalM.read(buffer);
+				//==>			
+				int vle = 0;
+				while(vle == 0) {
+					vle = VLEEncoder.read_vle(sock);
+					Thread.sleep(YaksImpl.TIMEOUT);
+				} 
+				if(vle > 0) {
+					//read response msg
+					System.out.println("==> [vle-eval]:" +vle);
+					ByteBuffer buffer = ByteBuffer.allocate(vle);
+					sock.read(buffer);
+					Message msgReply = evalM.read(buffer);
 
-				if(msgReply != null && msgReply.getMessageCode().equals(MessageCode.VALUES)) 
-				{
-					if(!msgReply.getValuesList().isEmpty()){
+					if(msgReply != null && msgReply.getMessageCode().equals(MessageCode.VALUES)) 
+					{
+						if(!msgReply.getValuesList().isEmpty()){
 
-						for (Map.Entry<Path, Value> pair : ((Message) msgReply).getValuesList().entrySet()) {
-							values.complete("(" + pair.getKey().toString() +", " +  pair.getValue().getValue().toString()+")");
+							for (Map.Entry<Path, Value> pair : ((Message) msgReply).getValuesList().entrySet()) {
+								values.complete("(" + pair.getKey().toString() +", " +  pair.getValue().getValue().toString()+")");
+							}
 						}
 					}
 				}

@@ -109,9 +109,11 @@ public class AdminImpl implements Admin {
 		int quorum = 1;
 		String p = "/"+Admin.PREFIX+"/"+Admin.MY_YAKS+"/backend/*/storage/"+stid;
 	
+		System.out.println("remove_storage: "+p);
+		
 		Map<Path, Value> kvs = workspace.get(Selector.ofString(p));
 
-		if(kvs.size() > 0) {
+		if((kvs != null) && (kvs.size() > 0)) {
 			Iterator<Map.Entry<Path, Value>> it = kvs.entrySet().iterator();
 			while (it.hasNext()) {
 			    Map.Entry<Path, Value> pair = it.next();

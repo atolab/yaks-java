@@ -25,7 +25,7 @@ public class MessageImpl implements Message
 	//1VLE max 64bit
 	static VLEEncoder encoder;
 	//vle length
-	static int vle_length;
+	static int vle_length, vle_bytes;
 	//1VLE max 64bit
 	static int correlation_id;
 	//8bit
@@ -62,9 +62,11 @@ public class MessageImpl implements Message
 		// 1bit. Initialized to false.
 		flag_s = 0;
 		// 1bit. Initialized to false.
-		flag_p = 0;
-		// vle length
-		vle_length = 1024;
+		flag_p = 0;		
+		//vle_bytes
+		vle_bytes = 8;
+		// vle length		
+		vle_length = (64 * 1024);
 		// messageCode
 		messageCode = null;
 		// Correction is VLEEncoder max 64bit
@@ -97,51 +99,51 @@ public class MessageImpl implements Message
 	public ByteBuffer write(SocketChannel sock, Message msg) 
 	{
 		
-		ByteBuffer bufVle =  ByteBuffer.allocate(1);
-		ByteBuffer buffer =  ByteBuffer.allocate(vle_length);
+		ByteBuffer buf_vle =  ByteBuffer.allocate(vle_bytes);
+		ByteBuffer buf_msg =  ByteBuffer.allocate(vle_length);
 		try {
 			
-			buffer.put((byte) msg.getMessageCode().getValue());
-			buffer.put((byte) flags);
-			buffer.put(VLEEncoder.encode(msg.getCorrelationID()));
+			buf_msg.put((byte) msg.getMessageCode().getValue());
+			buf_msg.put((byte) flags);
+			buf_msg.put(VLEEncoder.encode(msg.getCorrelationID()));
 			if(!msg.getPropertiesList().isEmpty()) {
-				buffer.put(Utils.porpertiesListToByteBuffer(msg.getPropertiesList()));
+				buf_msg.put(Utils.porpertiesListToByteBuffer(msg.getPropertiesList()));
 			}
 			if(!msg.getWorkspaceList().isEmpty()) {
-				buffer.put(Utils.workspaceListToByteBuffer(msg.getWorkspaceList()));
+				buf_msg.put(Utils.workspaceListToByteBuffer(msg.getWorkspaceList()));
 			}
 			if (msg.getPath() != null) 
 			{
-				buffer.put((byte)msg.getPath().toString().length());
-				buffer.put(msg.getPath().toString().getBytes());
+				buf_msg.put((byte)msg.getPath().toString().length());
+				buf_msg.put(msg.getPath().toString().getBytes());
 			}
 			if(msg.getSelector() != null) {
-				buffer.put((byte)msg.getSelector().toString().length());
-				buffer.put(msg.getSelector().toString().getBytes());
+				buf_msg.put((byte)msg.getSelector().toString().length());
+				buf_msg.put(msg.getSelector().toString().getBytes());
 			}
 			// adding the msg length
-			buffer.flip();
-			int limit = buffer.limit();
-			bufVle.put(0, (byte) (limit));
-
+			buf_msg.flip();
+			int msg_size = buf_msg.limit();
+			buf_vle.put(VLEEncoder.encode(msg_size));
+			
 			if(sock.isConnected()) 
 			{
-				sock.write(bufVle);
-				sock.write(buffer);
+				sock.write((ByteBuffer) buf_vle.flip());
+				sock.write(buf_msg);
 			}
 		
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
-		return buffer;
+		return buf_msg;
 	}
 
 	@Override
 	public Message read(ByteBuffer buffer){
 		
 		Value value;
-		
+		String strKey = "", strValue = "";
 		Message msg = new MessageImpl();
 
 		buffer.flip();
@@ -171,8 +173,6 @@ public class MessageImpl implements Message
 				{
 					byte[] key_bytes = new  byte[length_properties];
 					buffer.get(key_bytes, 0, length_properties);
-
-					String strKey = "", strValue = "";
 					try {
 						strValue = new String(key_bytes, "UTF-8");
 					} catch (UnsupportedEncodingException e) {
@@ -180,8 +180,6 @@ public class MessageImpl implements Message
 					}
 					strKey = strValue.substring(0, strValue.indexOf("="));
 					strValue = strValue.substring(strValue.indexOf("=")+1);
-					System.out.println("Decoded key:["+ strKey+ "] value:["+ strValue+"]");
-
 					propertiesList.put(strKey, strValue);
 					msg.add_property(strKey, strValue);
 				}
@@ -205,14 +203,13 @@ public class MessageImpl implements Message
 					int length_value  = (int) buffer.get();
 					byte[] value_bytes =  new byte[length_value];
 					buffer.get(value_bytes, 0, length_value);
-					String strKey = "", strValue = "";
+
 					try {
 						strKey = new String(key_bytes, "UTF-8");
 						strValue = new String(value_bytes, "UTF-8");
 					} catch (UnsupportedEncodingException e) {
 						e.printStackTrace();
 					}
-					System.out.println("Decoded key:["+ strKey+ "] value:["+ strValue + "] encoding:["+val_encoding+"]");
 					value = new Value();
 					value.setValue(strValue);
 					value.setEncoding(Encoding.getEncoding(val_encoding));

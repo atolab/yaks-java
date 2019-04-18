@@ -2,12 +2,11 @@ package is.yaks;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.channels.SocketChannel;
 import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import is.yaks.Workspace;
 
 
 /**
@@ -98,5 +97,6 @@ public interface Yaks {
      * Closes the Yaks api
      */
     public void close();
-
+        
+    public SocketChannel getChannel();
 }

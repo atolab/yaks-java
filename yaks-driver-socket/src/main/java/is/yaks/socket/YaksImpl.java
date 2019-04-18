@@ -29,11 +29,11 @@ public class YaksImpl implements Yaks {
 
 
 	private static Workspace workspace;
-	private static SocketChannel sock;
+	private SocketChannel socketChannel;
 	private static Selector selector;
 	private static BufferedReader input = null;	
 
-	public static final long TIMEOUT = 5l; // i.e 5l = 5ms, 1000l = i sec
+	//public static final double TIMEOUT = 1; // i.e 5l = 5ms, 1000l = i sec
 	
 	private AdminImpl adminImpl;
 	private YaksConfiguration config = YaksConfiguration.getInstance();
@@ -41,7 +41,7 @@ public class YaksImpl implements Yaks {
 
 	private static Yaks instance;
 	Runtime rt = null;
-
+	
 
 	private YaksImpl(){}
 
@@ -67,8 +67,8 @@ public class YaksImpl implements Yaks {
 		config.setYaksUrl(yaksUrl);
 	}
 
-	public static SocketChannel getChannel() {
-		return sock;
+	public SocketChannel getChannel() {
+		return socketChannel;
 	}
 
 
@@ -77,6 +77,7 @@ public class YaksImpl implements Yaks {
 	public Yaks login(Properties properties) {
 		Runtime rt = Runtime.getRuntime();
 		int port;
+		int vle = 0;
 		String h = (String)properties.get("host");
 		String p = (String)properties.get("port");
 		if(p.equals("")) {
@@ -88,26 +89,24 @@ public class YaksImpl implements Yaks {
 			// create non-blocking io socket
 			InetSocketAddress addr = new InetSocketAddress(InetAddress.getByName(h), port);
 			selector = Selector.open();
-			sock = SocketChannel.open(addr);
-			sock.setOption(StandardSocketOptions.TCP_NODELAY, true);
-			sock.configureBlocking(false);
-			sock.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+			socketChannel = SocketChannel.open(addr);
+			socketChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
+			socketChannel.configureBlocking(false);
+			socketChannel.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 
 			Message loginM = new MessageFactory().getMessage(MessageCode.LOGIN, properties);
 			//write msg
-			loginM.write(sock, loginM);
+			loginM.write(socketChannel, loginM);
 			//==>
-			int vle = 0;
 			while(vle == 0) {
-				vle = VLEEncoder.read_vle(sock);
-				Thread.sleep(YaksImpl.TIMEOUT);
+				vle = VLEEncoder.read_vle(socketChannel);
+				Thread.sleep(1); // sleeps for 1 millisec
 			} 
 			if (vle > 0) {
 				//	read response msg
-				System.out.println("==> [vle-login]:" +vle);
 				ByteBuffer buffer = ByteBuffer.allocate(vle);
-				sock.read(buffer);
-				Message msgReply = loginM.read(buffer);
+				socketChannel.read(buffer);
+				loginM.read(buffer);
 			}
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
@@ -124,7 +123,7 @@ public class YaksImpl implements Yaks {
 	@Override
 	public Admin admin() {
 
-		if(sock.isConnected()) {
+		if(socketChannel.isConnected()) {
 
 			adminImpl = AdminImpl.getInstance();
 
@@ -145,38 +144,37 @@ public class YaksImpl implements Yaks {
 	@Override
 	public Workspace workspace(Path path) {
 		WorkspaceImpl ws = new WorkspaceImpl();
+		int vle = 0;
 		try {
 			if(path != null) {
 				int wsid = 0;
 
 				Message workspaceM = new MessageFactory().getMessage(MessageCode.WORKSPACE, null);
 				workspaceM.setPath(path);
-				if(sock.isConnected()) {
+				if(socketChannel.isConnected()) {
 					//post msg
-					workspaceM.write(sock, workspaceM);
+					workspaceM.write(socketChannel, workspaceM);
 					//==>
-					int vle = 0;
 					while(vle == 0) {
-						vle = VLEEncoder.read_vle(sock);
-						Thread.sleep(YaksImpl.TIMEOUT);
+						vle = VLEEncoder.read_vle(socketChannel);
+						Thread.sleep(1);
 					}
 					if (vle > 0) {
-					//	read response msg
-					System.out.println("==> [vle-workspace]:" +vle);
-					ByteBuffer buffer = ByteBuffer.allocate(vle);
-					sock.read(buffer);
-					Message msgReply = workspaceM.read(buffer);
+						//	read response msg
+						ByteBuffer buffer = ByteBuffer.allocate(vle);
+						socketChannel.read(buffer);
+						Message msgReply = workspaceM.read(buffer);
 
-					//check_reply_is_ok
-					if(((Message) msgReply).getMessageCode().equals(MessageCode.OK)) {
-						//find_property wsid
-						Map<String, String> list = ((Message) msgReply).getPropertiesList();
-						if(!list.isEmpty()) {
-							wsid = Integer.parseInt(list.get("wsid"));
+						//check_reply_is_ok
+						if(((Message) msgReply).getMessageCode().equals(MessageCode.OK)) {
+							//find_property wsid
+							Map<String, String> list = ((Message) msgReply).getPropertiesList();
+							if(!list.isEmpty()) {
+								wsid = Integer.parseInt(list.get("wsid"));
+							}
+							ws.setWsid(wsid);
+							ws.setPath(path);
 						}
-						ws.setWsid(wsid);
-						ws.setPath(path);
-					}
 					}
 				}
 			}
@@ -192,7 +190,7 @@ public class YaksImpl implements Yaks {
 	public void close() {
 		try 
 		{
-			sock.close();
+			socketChannel.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

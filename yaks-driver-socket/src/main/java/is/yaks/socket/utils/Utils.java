@@ -17,6 +17,8 @@ public class Utils {
 //    public static final String IS_YAKS_ACCESS = "is.yaks.access";
 //    public static final String IS_YAKS_STORAGE = "is.yaks.storage";
 
+	private static int max_buffer_size = (64 * 1024);
+	
     private Utils() {
         // nothing to do, just hides the implicit public one
     }
@@ -41,7 +43,7 @@ public class Utils {
 	
 	public static ByteBuffer mapToByteBuffer(Map<String, String> map) 
 	{  
-		ByteBuffer buffer = ByteBuffer.allocate(512);
+		ByteBuffer buffer = ByteBuffer.allocate(max_buffer_size);
 		buffer.put((byte)map.size()); // put the size of the properties map
 		
 		Iterator<Map.Entry<String, String>> entries = map.entrySet().iterator();
@@ -59,7 +61,7 @@ public class Utils {
 	
 	public static ByteBuffer mapDataToByteBuffer(Map<String, String> map) 
 	{  
-		ByteBuffer buffer = ByteBuffer.allocate(512);
+		ByteBuffer buffer = ByteBuffer.allocate(max_buffer_size);
 		buffer.put((byte)map.size()); // put the size of the properties map
 		
 		Iterator<Map.Entry<String, String>> entries = map.entrySet().iterator();
@@ -78,7 +80,7 @@ public class Utils {
 
 	public static ByteBuffer porpertiesListToByteBuffer(Map<String, String> propertiesList) 
 	{   
-		ByteBuffer buffer = ByteBuffer.allocate(512);
+		ByteBuffer buffer = ByteBuffer.allocate(max_buffer_size);
 	//	buffer.put((byte)propertiesList.size()); 		// put the size of the map i.e. 0x01 
 		buffer.put((byte) 0x00);
 		
@@ -103,7 +105,7 @@ public class Utils {
 	
 	public static ByteBuffer workspaceListToByteBuffer(Map<Path, Value> wkspList) 
 	{   
-		ByteBuffer buffer = ByteBuffer.allocate(512);
+		ByteBuffer buffer = ByteBuffer.allocate(max_buffer_size);
 		buffer.put((byte)wkspList.size()); 		// put the size of the map i.e. 0x01 
 		
 		for (Map.Entry<Path, Value> entry : wkspList.entrySet())
@@ -132,7 +134,7 @@ public class Utils {
 	
 	public static ByteBuffer listDataToByteBuffer(List<String> data) 
 	{   
-		ByteBuffer buffer = ByteBuffer.allocate(512);
+		ByteBuffer buffer = ByteBuffer.allocate(max_buffer_size);
 	//	buffer.put((byte)data.size()); 		// put the size of the data list 0x01 no need
 		
 		Iterator<String> entries = data.iterator();

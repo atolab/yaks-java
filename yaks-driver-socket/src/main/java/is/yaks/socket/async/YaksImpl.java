@@ -7,7 +7,6 @@ import java.net.InetSocketAddress;
 import java.net.StandardSocketOptions;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
@@ -22,7 +21,6 @@ import is.yaks.async.Admin;
 import is.yaks.async.Workspace;
 import is.yaks.async.Yaks;
 import is.yaks.socket.messages.MessageFactory;
-import is.yaks.socket.utils.GsonTypeToken;
 import is.yaks.socket.utils.VLEEncoder;
 import is.yaks.socket.utils.YaksConfiguration;
 import is.yaks.utils.MessageCode;
@@ -32,11 +30,11 @@ public class YaksImpl implements Yaks {
 
 	private CompletableFuture<Workspace> workspaceFuture;
 	private CompletableFuture<Admin> adminFuture;
-	private static SocketChannel sock;
+	private SocketChannel socketChannel;
 	private static Selector selector;
 	private static BufferedReader input = null;	
 
-	public static final long TIMEOUT = 5l; // i.e 5l = 5ms, 1000l = i sec
+	public static final long TIMEOUT = 1l; // i.e 5l = 5ms, 1000l = i sec
 
 	private AdminImpl adminImpl;
 
@@ -72,49 +70,48 @@ public class YaksImpl implements Yaks {
 		config.setYaksUrl(yaksUrl);
 	}
 
-	public static SocketChannel getChannel() {
-		return sock;
+	public SocketChannel getChannel() {
+		return socketChannel;
 	}
 
 
 
 	@Override
 	public Yaks login(Properties properties) {
-		Runtime rt = Runtime.getRuntime();
+//		Runtime rt = Runtime.getRuntime();
 		int port;
 		String h = (String)properties.get("host");
 		String p = (String)properties.get("port");
 		if(p.equals("")) {
 			port = Yaks.DEFAUL_PORT;
 		} else {
-			port = Integer.parseInt(p);
+			port = Integer.parseInt((String)properties.get("port"));
 		}
 		try {
-
 			InetSocketAddress addr = new InetSocketAddress(InetAddress.getByName(h), port);
 			selector = Selector.open();
-			sock = SocketChannel.open(addr);
-			sock.setOption(StandardSocketOptions.TCP_NODELAY, true);
-			sock.configureBlocking(false);
-			sock.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-			SelectionKey key = null;
+			socketChannel = SocketChannel.open(addr);
+			socketChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
+			socketChannel.configureBlocking(false);
+			socketChannel.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 
 			Message loginM = new MessageFactory().getMessage(MessageCode.LOGIN, properties);
+			
 			//write msg
-			loginM.write(sock, loginM);
-
-			//==>
-			int vle = 0;
-			while(vle == 0) {
-				vle = VLEEncoder.read_vle(sock);
-				Thread.sleep(TIMEOUT);
-			} 
-			if (vle > 0) {
-				//	read response msg
-				System.out.println("==> [vle-login]:" +vle);    			
-				ByteBuffer buffer2 = ByteBuffer.allocate(vle);
-				sock.read(buffer2);
-				loginM.read(buffer2);
+			if(socketChannel!=null) {
+				loginM.write(socketChannel, loginM);
+				//==>
+				int vle = 0;
+				while(vle == 0) {
+					vle = VLEEncoder.read_vle(socketChannel);
+					Thread.sleep(TIMEOUT);
+				} 
+				if (vle > 0) {
+					//	read response msg
+					ByteBuffer buffer2 = ByteBuffer.allocate(vle);
+					socketChannel.read(buffer2);
+					loginM.read(buffer2);
+				}
 			}
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
@@ -133,7 +130,7 @@ public class YaksImpl implements Yaks {
 		try {
 			adminFuture = new CompletableFuture<Admin>();
 
-			if(sock.isConnected()) {
+			if(socketChannel.isConnected()) {
 
 				adminImpl = AdminImpl.getInstance();
 
@@ -168,21 +165,21 @@ public class YaksImpl implements Yaks {
 
 				Message worskpaceM = new MessageFactory().getMessage(MessageCode.WORKSPACE, null);
 				worskpaceM.setPath(path);
-				if(sock.isConnected()) 
+				if(socketChannel.isConnected()) 
 				{
 					//post msg
-					worskpaceM.write(sock, worskpaceM);
+					worskpaceM.write(socketChannel, worskpaceM);
 					//==>
 					int vle = 0;
 					while(vle == 0) {
-						vle = VLEEncoder.read_vle(sock);
+						vle = VLEEncoder.read_vle(socketChannel);
 						Thread.sleep(TIMEOUT);
 					} 
 					if (vle > 0) {
 						// read response msg
 						System.out.println("==> [vle-workspace]:" +vle);
 						ByteBuffer buffer = ByteBuffer.allocate(vle);
-						sock.read(buffer);
+						socketChannel.read(buffer);
 						Message msgReply = worskpaceM.read(buffer);
 
 						if(msgReply.getMessageCode().equals(MessageCode.OK)) 
@@ -211,7 +208,7 @@ public class YaksImpl implements Yaks {
 	public void close() {
 		try 
 		{
-			sock.close();
+			socketChannel.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
