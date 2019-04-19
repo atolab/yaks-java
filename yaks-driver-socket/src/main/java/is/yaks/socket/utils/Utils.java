@@ -7,17 +7,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import is.yaks.Encoding;
 import is.yaks.Path;
 import is.yaks.Value;
+import is.yaks.socket.messages.MessageImpl;
 
 public class Utils {
 
- //   public static final Logger LOG = LoggerFactory.getLogger(Utils.class);
-//    public static final String IS_YAKS_ACCESS = "is.yaks.access";
-//    public static final String IS_YAKS_STORAGE = "is.yaks.storage";
+    public static final Logger LOG = LoggerFactory.getLogger(Utils.class);
 
-	private static int max_buffer_size = (64 * 1024);
+
+	private static int max_buffer_size = (2 * 1024);
 	
     private Utils() {
         // nothing to do, just hides the implicit public one
@@ -44,15 +47,15 @@ public class Utils {
 	public static ByteBuffer mapToByteBuffer(Map<String, String> map) 
 	{  
 		ByteBuffer buffer = ByteBuffer.allocate(max_buffer_size);
-		buffer.put((byte)map.size()); // put the size of the properties map
+		buffer.put(VLEEncoder.encode(map.size())); // put the size of the properties map
 		
 		Iterator<Map.Entry<String, String>> entries = map.entrySet().iterator();
 		while(entries.hasNext()) 
 		{
 		    Map.Entry<String, String> entry = entries.next();
-		    buffer.put((byte) entry.getKey().length()); 
+		    buffer.put(VLEEncoder.encode(entry.getKey().length())); 
 		    buffer.put(entry.getKey().getBytes()); 
-		    buffer.put((byte) entry.getValue().length());
+		    buffer.put(VLEEncoder.encode(entry.getValue().length()));
 		    buffer.put(entry.getValue().getBytes());
 		}	
 		buffer.flip();
@@ -62,16 +65,16 @@ public class Utils {
 	public static ByteBuffer mapDataToByteBuffer(Map<String, String> map) 
 	{  
 		ByteBuffer buffer = ByteBuffer.allocate(max_buffer_size);
-		buffer.put((byte)map.size()); // put the size of the properties map
+		buffer.put(VLEEncoder.encode(map.size())); // put the size of the properties map
 		
 		Iterator<Map.Entry<String, String>> entries = map.entrySet().iterator();
 		while(entries.hasNext()) 
 		{
 		    Map.Entry<String, String> entry = entries.next();
-		    buffer.put((byte) entry.getKey().length()); 
+		    buffer.put(VLEEncoder.encode(entry.getKey().length())); 
 		    buffer.put(entry.getKey().getBytes()); 
 		    buffer.put((byte) Encoding.RAW.getIndex()); //Encoding.RAW = 0x01
-		    buffer.put((byte) entry.getValue().length());
+		    buffer.put(VLEEncoder.encode(entry.getValue().length()));
 		    buffer.put(entry.getValue().getBytes());
 		}	
 		buffer.flip();
@@ -80,33 +83,33 @@ public class Utils {
 
 	public static ByteBuffer porpertiesListToByteBuffer(Map<String, String> propertiesList) 
 	{   
-		ByteBuffer buffer = ByteBuffer.allocate(max_buffer_size);
-	//	buffer.put((byte)propertiesList.size()); 		// put the size of the map i.e. 0x01 
-		buffer.put((byte) 0x00);
+		ByteBuffer buf_vle =  ByteBuffer.allocate(MessageImpl.vle_bytes);
+		ByteBuffer buf_prop = ByteBuffer.allocate(max_buffer_size);
 		
 		for (Map.Entry<String, String> entry : propertiesList.entrySet())
 		{
-		    String key = entry.getKey();
-		    String val = entry.getValue();
-		 //   buffer.put((byte)key.length());
-		    buffer.put(key.getBytes());
-		    buffer.put("=".getBytes());
-		    buffer.put(val.getBytes());
+
+		    buf_prop.put(entry.getKey().getBytes());
+		    buf_prop.put("=".getBytes());
+		    buf_prop.put(entry.getValue().getBytes());
 		}
 		
-		// adding the property length
-		buffer.flip();
-		int limit = buffer.limit();
-		buffer.put(0, (byte) (limit-1));
+		// calculate the property length
+		buf_prop.flip();
+		buf_vle.put(VLEEncoder.encode(buf_prop.limit()));
+		buf_vle.flip();
 		
-//		buffer.flip();
-		return buffer;  
+		ByteBuffer buff = ByteBuffer.allocate(buf_vle.limit()+buf_prop.limit());
+		buff.put(buf_vle);
+		buff.put(buf_prop);
+		buff.flip();
+		return buff;
 	} 
 	
 	public static ByteBuffer workspaceListToByteBuffer(Map<Path, Value> wkspList) 
 	{   
 		ByteBuffer buffer = ByteBuffer.allocate(max_buffer_size);
-		buffer.put((byte)wkspList.size()); 		// put the size of the map i.e. 0x01 
+		buffer.put(VLEEncoder.encode(wkspList.size())); 		// put the size of the map i.e. 0x01 
 		
 		for (Map.Entry<Path, Value> entry : wkspList.entrySet())
 		{
@@ -118,14 +121,17 @@ public class Utils {
 				    v = v.substring(v.indexOf("{")+1, v.indexOf("}"));
 				}
 			} 
-		    buffer.put((byte)key.toString().length());
+			
+			buffer.put(VLEEncoder.encode(key.toString().length())); //CHANGED: it has to be a vle because the key can grow to much
+		    
 		    buffer.put(key.toString().getBytes());
 		    buffer.put((byte)val.getEncoding().getIndex());
 		    if(val.getEncoding().getIndex() == Encoding.RAW.getIndex()) {
 		    	buffer.put((byte)val.getEncoding().getIndex());
 		    	buffer.put(Encoding.get_raw_format().getBytes());
 		    }
-		    buffer.put((byte)v.length());
+		    buffer.put(VLEEncoder.encode(v.length())); //CHANGED this too
+		    
 		    buffer.put(v.getBytes());
 		}
 		buffer.flip();
@@ -135,13 +141,11 @@ public class Utils {
 	public static ByteBuffer listDataToByteBuffer(List<String> data) 
 	{   
 		ByteBuffer buffer = ByteBuffer.allocate(max_buffer_size);
-	//	buffer.put((byte)data.size()); 		// put the size of the data list 0x01 no need
-		
 		Iterator<String> entries = data.iterator();
 		while(entries.hasNext()) 
 		{
 		    String entry = entries.next();
-		    buffer.put((byte) entry.length());
+		    buffer.put(VLEEncoder.encode(entry.length()));
 		    buffer.put(entry.getBytes()); 
 		}	
 		buffer.flip();

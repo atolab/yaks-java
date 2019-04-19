@@ -12,11 +12,10 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
 
-import is.yaks.Path;
 import is.yaks.Admin;
 import is.yaks.Message;
+import is.yaks.Path;
 import is.yaks.Workspace;
 import is.yaks.Yaks;
 import is.yaks.socket.messages.MessageFactory;
@@ -34,14 +33,14 @@ public class YaksImpl implements Yaks {
 	private static BufferedReader input = null;	
 
 	//public static final double TIMEOUT = 1; // i.e 5l = 5ms, 1000l = i sec
-	
+
 	private AdminImpl adminImpl;
 	private YaksConfiguration config = YaksConfiguration.getInstance();
 	private GsonTypeToken gsonTypes = GsonTypeToken.getInstance();
 
 	private static Yaks instance;
 	Runtime rt = null;
-	
+
 
 	private YaksImpl(){}
 
@@ -80,6 +79,7 @@ public class YaksImpl implements Yaks {
 		int vle = 0;
 		String h = (String)properties.get("host");
 		String p = (String)properties.get("port");
+		boolean is_login_ok = false;
 		if(p.equals("")) {
 			port = Yaks.DEFAUL_PORT;
 		} else {
@@ -100,21 +100,24 @@ public class YaksImpl implements Yaks {
 			//==>
 			while(vle == 0) {
 				vle = VLEEncoder.read_vle(socketChannel);
-				Thread.sleep(1); // sleeps for 1 millisec
 			} 
 			if (vle > 0) {
 				//	read response msg
 				ByteBuffer buffer = ByteBuffer.allocate(vle);
 				socketChannel.read(buffer);
-				loginM.read(buffer);
+				Message msgReply = loginM.read(buffer);
+				if(msgReply.getCorrelationID() == loginM.getCorrelationID()) {
+					if(msgReply.getMessageCode().equals(MessageCode.OK)) 
+					{
+						is_login_ok = true;
+					}
+				}
 			}
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		} 
 		return instance;
 	}
 
@@ -157,7 +160,6 @@ public class YaksImpl implements Yaks {
 					//==>
 					while(vle == 0) {
 						vle = VLEEncoder.read_vle(socketChannel);
-						Thread.sleep(1);
 					}
 					if (vle > 0) {
 						//	read response msg
@@ -165,24 +167,24 @@ public class YaksImpl implements Yaks {
 						socketChannel.read(buffer);
 						Message msgReply = workspaceM.read(buffer);
 
-						//check_reply_is_ok
-						if(((Message) msgReply).getMessageCode().equals(MessageCode.OK)) {
-							//find_property wsid
-							Map<String, String> list = ((Message) msgReply).getPropertiesList();
-							if(!list.isEmpty()) {
-								wsid = Integer.parseInt(list.get("wsid"));
+						//check_if_corr_id is the same
+						if(msgReply.getCorrelationID() == workspaceM.getCorrelationID()) {
+							if(((Message) msgReply).getMessageCode().equals(MessageCode.OK)) {
+								//find_property wsid
+								Map<String, String> list = ((Message) msgReply).getPropertiesList();
+								if(!list.isEmpty()) {
+									wsid = Integer.parseInt(list.get("wsid"));
+								}
+								ws.setWsid(wsid);
+								ws.setPath(path);
 							}
-							ws.setWsid(wsid);
-							ws.setPath(path);
 						}
 					}
 				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		} 
 		return ws;
 	}
 

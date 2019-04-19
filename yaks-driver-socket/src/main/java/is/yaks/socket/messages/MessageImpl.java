@@ -25,7 +25,7 @@ public class MessageImpl implements Message
 	//1VLE max 64bit
 	static VLEEncoder encoder;
 	//vle length
-	static int vle_length, vle_bytes;
+	public static int vle_length, vle_bytes;
 	//1VLE max 64bit
 	static int correlation_id;
 	//8bit
@@ -114,17 +114,16 @@ public class MessageImpl implements Message
 			}
 			if (msg.getPath() != null) 
 			{
-				buf_msg.put((byte)msg.getPath().toString().length());
+				buf_msg.put(VLEEncoder.encode(msg.getPath().toString().length()));
 				buf_msg.put(msg.getPath().toString().getBytes());
 			}
 			if(msg.getSelector() != null) {
-				buf_msg.put((byte)msg.getSelector().toString().length());
+				buf_msg.put(VLEEncoder.encode(msg.getSelector().toString().length()));
 				buf_msg.put(msg.getSelector().toString().getBytes());
 			}
 			// adding the msg length
 			buf_msg.flip();
-			int msg_size = buf_msg.limit();
-			buf_vle.put(VLEEncoder.encode(msg_size));
+			buf_vle.put(VLEEncoder.encode(buf_msg.limit()));
 			
 			if(sock.isConnected()) 
 			{

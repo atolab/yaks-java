@@ -12,7 +12,6 @@ import is.yaks.Selector;
 import is.yaks.Value;
 import is.yaks.Workspace;
 import is.yaks.Yaks;
-import is.yaks.socket.YaksImpl;
 import is.yaks.socket.messages.MessageFactory;
 import is.yaks.socket.utils.VLEEncoder;
 import is.yaks.utils.MessageCode;
@@ -21,8 +20,8 @@ public class WorkspaceImpl implements Workspace {
 
 	public Path path =  null;
 	public int wsid = 0;
-	
-	
+
+
 	private static WorkspaceImpl instance;
 	Yaks yaks = YaksImpl.getInstance();
 	SocketChannel sock = yaks.getChannel();
@@ -55,16 +54,18 @@ public class WorkspaceImpl implements Workspace {
 				//==>			
 				while(vle == 0) {
 					vle = VLEEncoder.read_vle(sock);
-					Thread.sleep(1);
+
 				}
 				if(vle > 0) {
 					//	read response msg
 					ByteBuffer buffer = ByteBuffer.allocate(vle);
 					sock.read(buffer);
 					Message msgReply = putM.read(buffer);
-					if((msgReply) !=null && msgReply.getMessageCode().equals(MessageCode.OK)) 
-					{
-						is_put_ok = true;
+					if(msgReply.getCorrelationID() == putM.getCorrelationID()) {
+						if((msgReply) !=null && msgReply.getMessageCode().equals(MessageCode.OK)) 
+						{
+							is_put_ok = true;
+						}
 					}
 				}
 			} else {
@@ -73,9 +74,7 @@ public class WorkspaceImpl implements Workspace {
 
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		} 
 		return is_put_ok;
 	}
 
@@ -97,27 +96,27 @@ public class WorkspaceImpl implements Workspace {
 				//==>			
 				while(vle == 0) {
 					vle = VLEEncoder.read_vle(sock);
-					Thread.sleep(1);
+
 				}
 				if(vle > 0) {
 					//	read response msg
 					ByteBuffer buffer = ByteBuffer.allocate(vle);
 					sock.read(buffer);
 					Message msgReply = getM.read(buffer);
-					if(msgReply !=null && msgReply.getMessageCode().equals(MessageCode.VALUES)) 
-					{	
-						if(!msgReply.getValuesList().isEmpty())
-						{
-							kvs = msgReply.getValuesList();
+					if(msgReply.getCorrelationID() == getM.getCorrelationID()) {
+						if(msgReply !=null && msgReply.getMessageCode().equals(MessageCode.VALUES)) 
+						{	
+							if(!msgReply.getValuesList().isEmpty())
+							{
+								kvs = msgReply.getValuesList();
+							}
 						}
 					}
 				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		} 
 		return kvs;
 	}
 
@@ -135,25 +134,24 @@ public class WorkspaceImpl implements Workspace {
 				//==>			
 				while(vle == 0) {
 					vle = VLEEncoder.read_vle(sock);
-					Thread.sleep(1);
+
 				}
 				if(vle > 0) {
 					//	read response msg
 					ByteBuffer buffer = ByteBuffer.allocate(vle);
 					sock.read(buffer);
 					Message msgReply = deleteM.read(buffer);
-
-					if(msgReply.getMessageCode().equals(MessageCode.OK)) 
-					{	
-						is_remove_ok = true;
+					if(msgReply.getCorrelationID() == deleteM.getCorrelationID()) {
+						if(msgReply.getMessageCode().equals(MessageCode.OK)) 
+						{	
+							is_remove_ok = true;
+						}
 					}
 				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		} 
 		return is_remove_ok;
 	}
 
@@ -170,22 +168,22 @@ public class WorkspaceImpl implements Workspace {
 				//==>			
 				while(vle == 0) {
 					vle = VLEEncoder.read_vle(sock);
-					Thread.sleep(1);
+
 				}
 				if(vle > 0) {
 					//	read response msg
 					ByteBuffer buffer = ByteBuffer.allocate(vle);
 					sock.read(buffer);
 					Message msgReply = subscribeM.read(buffer);
-					if(msgReply.getMessageCode().equals(MessageCode.OK)) 
-					{
-						subid = (String)msgReply.getPropertiesList().get(Message.SUBID);
+					if(msgReply.getCorrelationID() == subscribeM.getCorrelationID()) {
+						if(msgReply.getMessageCode().equals(MessageCode.OK)) 
+						{
+							subid = (String)msgReply.getPropertiesList().get(Message.SUBID);
+						}
 					}
 				}
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 		return subid;
@@ -204,25 +202,24 @@ public class WorkspaceImpl implements Workspace {
 				//==>			
 				while(vle == 0) {
 					vle = VLEEncoder.read_vle(sock);
-					Thread.sleep(1);
+
 				}
 				if(vle > 0) {
 					//	read response msg
 					ByteBuffer buffer = ByteBuffer.allocate(vle);
 					sock.read(buffer);
 					Message msgReply = subscribeM.read(buffer);
-
-					if(msgReply.getMessageCode().equals(MessageCode.OK)) 
-					{
-						subid = (String)msgReply.getPropertiesList().get(Message.SUBID);
+					if(msgReply.getCorrelationID() == subscribeM.getCorrelationID()) {
+						if(msgReply.getMessageCode().equals(MessageCode.OK)) 
+						{
+							subid = (String)msgReply.getPropertiesList().get(Message.SUBID);
+						}
 					}
 				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}	
+		} 
 		return subid;
 	}
 
@@ -239,31 +236,31 @@ public class WorkspaceImpl implements Workspace {
 				//==>			
 				while(vle == 0) {
 					vle = VLEEncoder.read_vle(sock);
-					Thread.sleep(1);
+
 				}
 				if(vle > 0) {
 					//	read response msg
 					ByteBuffer buffer = ByteBuffer.allocate(vle);
 					sock.read(buffer);
 					Message msgReply = unsubM.read(buffer);
-
-					if(msgReply.getMessageCode().equals(MessageCode.OK)) 
-					{
-						is_unsub_ok = true;
+					if(msgReply.getCorrelationID() == unsubM.getCorrelationID()) {
+						if(msgReply.getMessageCode().equals(MessageCode.OK)) 
+						{
+							is_unsub_ok = true;
+						}
 					}
 				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}	
+		} 
 		return is_unsub_ok;
 	}
 
 	@Override
 	public void register_eval(Path path, Listener evcb) {
 		int vle = 0;
+		boolean is_reg_eval_ok = false;
 		try {	
 
 			Message regEvalM = new  MessageFactory().getMessage(MessageCode.REG_EVAL, null);
@@ -274,27 +271,31 @@ public class WorkspaceImpl implements Workspace {
 				//==>			
 				while(vle == 0) {
 					vle = VLEEncoder.read_vle(sock);
-					Thread.sleep(1);
+
 				}
 				if(vle > 0) {
 					//	read response msg
 					ByteBuffer buffer = ByteBuffer.allocate(vle);
 					sock.read(buffer);
-					regEvalM.read(buffer);
+					Message msgReply = regEvalM.read(buffer);
+					if(msgReply.getCorrelationID() == regEvalM.getCorrelationID()) {
+						if(msgReply.getMessageCode().equals(MessageCode.OK)) 
+						{
+							is_reg_eval_ok = true;
+						}
+					}
 				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		} 
 	}
 
 	@Override
 	public void unregister_eval(Path path) {
 		int vle = 0;
+		boolean is_unreg_eval_ok = false;
 		try {	
-
 			Message unreg_evalM = new  MessageFactory().getMessage(MessageCode.UNREG_EVAL, null);
 			unreg_evalM.add_property(Message.WSID, String.valueOf(wsid));
 			unreg_evalM.setPath(Path.ofString(path.toString()));
@@ -303,20 +304,24 @@ public class WorkspaceImpl implements Workspace {
 				//==>			
 				while(vle == 0) {
 					vle = VLEEncoder.read_vle(sock);
-					Thread.sleep(1);
+
 				}
 				if(vle > 0) {
 					//	read response msg
 					ByteBuffer buffer = ByteBuffer.allocate(vle);
 					sock.read(buffer);
-					unreg_evalM.read(buffer);
+					Message msgReply = unreg_evalM.read(buffer);
+					if(msgReply.getCorrelationID() == unreg_evalM.getCorrelationID()) {
+						if(msgReply.getMessageCode().equals(MessageCode.OK)) 
+						{
+							is_unreg_eval_ok = true;
+						}
+					}
 				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		} 
 	}
 
 	@Override
@@ -332,20 +337,21 @@ public class WorkspaceImpl implements Workspace {
 				//==>			
 				while(vle == 0) {
 					vle = VLEEncoder.read_vle(sock);
-					Thread.sleep(1);
+
 				}
 				if(vle > 0) {
 					//	read response msg
 					ByteBuffer buffer = ByteBuffer.allocate(vle);
 					sock.read(buffer);
 					Message msgReply = evalM.read(buffer);
+					if(msgReply.getCorrelationID() == evalM.getCorrelationID()) {
+						if(msgReply != null && msgReply.getMessageCode().equals(MessageCode.VALUES)) 
+						{
+							if(!msgReply.getValuesList().isEmpty()){
 
-					if(msgReply != null && msgReply.getMessageCode().equals(MessageCode.VALUES)) 
-					{
-						if(!msgReply.getValuesList().isEmpty()){
-
-							for (Map.Entry<Path, Value> pair : msgReply.getValuesList().entrySet()) {
-								values += "(" + pair.getKey().toString() +", " +  pair.getValue().getValue().toString()+")";
+								for (Map.Entry<Path, Value> pair : msgReply.getValuesList().entrySet()) {
+									values += "(" + pair.getKey().toString() +", " +  pair.getValue().getValue().toString()+")";
+								}
 							}
 						}
 					}
@@ -353,9 +359,7 @@ public class WorkspaceImpl implements Workspace {
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		} 
 		return values;
 	}
 

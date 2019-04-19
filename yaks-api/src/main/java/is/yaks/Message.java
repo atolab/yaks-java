@@ -45,7 +45,7 @@ public interface Message
 	
 	
 	/**
-	 * Write Message into a Buffer 
+	 * Writes a Message into a SocketChannel 
 	 * 
 	 * @return ByteBuffer
 	 */
