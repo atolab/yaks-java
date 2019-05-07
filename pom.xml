@@ -30,7 +30,6 @@
 			<modules>
 				<module>parent-pom</module>
 				<module>yaks-api</module>                
-				<module>yaks-driver-rest</module>
 				<module>yaks-driver-socket</module>
 			</modules>
 		</profile>

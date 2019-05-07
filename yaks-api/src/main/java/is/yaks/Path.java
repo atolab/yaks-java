@@ -4,9 +4,8 @@ import java.util.Map;
 
 public class Path implements Comparable<Path> {
 
-	
-	private Encoding encoding;
-	private String pathValue;
+    private Encoding encoding;
+    private String pathValue;
 
     private Path(String p) {
         if (p == null) {
@@ -17,13 +16,10 @@ public class Path implements Comparable<Path> {
         this.pathValue = p;
     }
 
-    private void validateSelectorPath(String p) throws IllegalArgumentException 
-    {
+    private void validateSelectorPath(String p) throws IllegalArgumentException {
     }
 
-
-
-	public static Path ofString(String string) {
+    public static Path ofString(String string) {
         return new Path(string);
     }
 
@@ -62,10 +58,10 @@ public class Path implements Comparable<Path> {
     }
 
     public Encoding getEncoding() {
-		return encoding;
-	}
+        return encoding;
+    }
 
-	public void setEncoding(Encoding encoding) {
-		this.encoding = encoding;
-	}
+    public void setEncoding(Encoding encoding) {
+        this.encoding = encoding;
+    }
 }

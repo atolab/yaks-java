@@ -1,9 +1,6 @@
-package is.yaks.async;
+package is.yaks.socket.lib;
 
-import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 import is.yaks.Path;
 import is.yaks.Selector;
@@ -12,55 +9,16 @@ import is.yaks.utils.MessageCode;
 
 public interface Message {
 
-    /*
-     * This part is in enum MessageCode public static int LOGIN = 0x01; public static int LOGOUT = 0x02; public static
-     * int WORKSPACE = 0X03;
-     * 
-     * public static int PUT = 0xA0; public static int UPDATE = 0xA1; public static int GET = 0xA2; public static int
-     * DELETE = 0xA3;
-     * 
-     * public static int SUB = 0xB0; public static int UNSUB = 0xB1; public static int NOTIFY = 0xB2;
-     * 
-     * public static int REG_EVAL = 0xC0; public static int UNREG_EVAL = 0xC1; public static int EVAL = 0xC2;
-     * 
-     * public static int OK = 0xD0; public static int VALUES = 0xD1;
-     * 
-     * public static int ERROR = 0xE0;
-     */
-
     public static String WSID = "wsid";
     public static String AUTO = "auto";
     public static String SUBID = "subid";
 
     /**
-     * Write Message into a Buffer
+     * Returns the message code
      * 
-     * @return ByteBuffer
+     * @return MessageCode
      */
-    public ByteBuffer write(SocketChannel sock, Message msg);
-
-    /**
-     * Read data from the buffer into a Message
-     * 
-     * @param buffer
-     * @return Message
-     */
-    public CompletableFuture<Message> read(SocketChannel sock, ByteBuffer buffer);
-
-    /**
-     * Set the message selector
-     * 
-     * @param selector
-     */
-    public CompletableFuture<Void> add_selector(Selector selector);
-
-    /**
-     * Add a workspace
-     * 
-     * @param path
-     * @param value
-     */
-    public CompletableFuture<Void> add_workspace(Path p, Value v);
+    public MessageCode getMessageCode();
 
     /**
      * Returns the set of tuples *<path,value>* available in YAKS
@@ -82,13 +40,6 @@ public interface Message {
      * @return list
      */
     public Map<Path, Value> getWorkspaceList();
-
-    /**
-     * Returns the message code
-     * 
-     * @return MessageCode
-     */
-    public MessageCode getMessageCode();
 
     /**
      * Returns the flags of the message
@@ -119,6 +70,13 @@ public interface Message {
     public void setCorrelationId(int corr_id);
 
     /**
+     * Set the message selector
+     * 
+     * @param selector
+     */
+    public void add_selector(Selector selector);
+
+    /**
      * Add a message's properties
      * 
      * @param key
@@ -133,6 +91,14 @@ public interface Message {
      * @param value
      */
     public void add_value(Path path, Value value);
+
+    /**
+     * Add a workspace
+     * 
+     * @param path
+     * @param value
+     */
+    public void add_workspace(Path p, Value v);
 
     /**
      * Get the path

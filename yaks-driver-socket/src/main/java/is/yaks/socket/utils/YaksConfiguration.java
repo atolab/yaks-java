@@ -19,9 +19,9 @@ public class YaksConfiguration {
     private String yaksUrl;
     private ExecutorService executorService = Executors.newFixedThreadPool(5);
     private SocketChannel socketChannel;
-	private JSONObject jsonObj;
-	private Gson gson;
-	private BufferedReader input = null;
+    private JSONObject jsonObj;
+    private Gson gson;
+    private BufferedReader input = null;
 
     // first load at the call of YaksConfiguration.getInstance()
     // work in multithread env
@@ -34,45 +34,45 @@ public class YaksConfiguration {
     }
 
     private YaksConfiguration() {
-        
-    	//set properties host, port, cachesize
-		Properties options = new Properties();
-		options.setProperty("host", "localhost");
-		options.setProperty("port", "7887");
-		options.setProperty("cacheSize", "1024");
-		
-		try 
-		{		
-			InetSocketAddress addr = new InetSocketAddress(options.getProperty("host"), Integer.parseInt(options.getProperty("port")));
-			Selector selector = Selector.open();			
-			socketChannel = SocketChannel.open();
-			socketChannel.configureBlocking(false);
-			socketChannel.connect(addr);
-			socketChannel.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-			
-	        jsonObj = new JSONObject();        
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+
+        // set properties host, port, cachesize
+        Properties options = new Properties();
+        options.setProperty("host", "localhost");
+        options.setProperty("port", "7887");
+        options.setProperty("cacheSize", "1024");
+
+        try {
+            InetSocketAddress addr = new InetSocketAddress(options.getProperty("host"),
+                    Integer.parseInt(options.getProperty("port")));
+            Selector selector = Selector.open();
+            socketChannel = SocketChannel.open();
+            socketChannel.configureBlocking(false);
+            socketChannel.connect(addr);
+            socketChannel.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+
+            jsonObj = new JSONObject();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public SocketChannel getChannel() {
-		return socketChannel;
-	}
+        return socketChannel;
+    }
 
-	public void setChannel(SocketChannel channel) {
-		this.socketChannel = channel;
-	}
+    public void setChannel(SocketChannel channel) {
+        this.socketChannel = channel;
+    }
 
-	public JSONObject getJsonObj() {
-		return jsonObj;
-	}
+    public JSONObject getJsonObj() {
+        return jsonObj;
+    }
 
-	public void setJsonObj(JSONObject jsonObj) {
-		this.jsonObj = jsonObj;
-	}
+    public void setJsonObj(JSONObject jsonObj) {
+        this.jsonObj = jsonObj;
+    }
 
-	public String getYaksUrl() {
+    public String getYaksUrl() {
         return this.yaksUrl;
     }
 
@@ -83,7 +83,7 @@ public class YaksConfiguration {
     public ExecutorService getExecutorService() {
         return executorService;
     }
-    
+
     public Gson getGson() {
         return gson;
     }

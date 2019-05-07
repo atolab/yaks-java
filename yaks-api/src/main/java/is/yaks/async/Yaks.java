@@ -13,8 +13,8 @@ import is.yaks.Path;
  */
 public interface Yaks {
 
-	public static int DEFAUL_PORT = 7887;
-	
+    public static int DEFAUL_PORT = 7887;
+
     /**
      * Static operation to get an instance of a Yaks implementation.
      * 
@@ -51,30 +51,26 @@ public interface Yaks {
         }
         return null;
     }
-    
+
     /**
-     * Establish a session with the Yaks instance reachable through the
-     * provided *locator*.
+     * Establish a session with the Yaks instance reachable through the provided *locator*.
      * 
-     * Valid format for the locator are valid  IP addresses as well
-     * as the combination IP:PORT.
-     */    
+     * Valid format for the locator are valid IP addresses as well as the combination IP:PORT.
+     */
     public Yaks login(Properties properties);
-    
+
     /**
-     * Creates an admin workspace that provides helper operations to
-     * administer Yaks.
+     * Creates an admin workspace that provides helper operations to administer Yaks.
      */
     public CompletableFuture<Admin> admin();
-        
+
     /**
-     * Creates a workspace relative to the provided **path**.
-     * Any *put* or *get* operation with relative paths on this workspace
-     * will be prepended with the workspace *path*.
+     * Creates a workspace relative to the provided **path**. Any *put* or *get* operation with relative paths on this
+     * workspace will be prepended with the workspace *path*.
      * 
      */
     public CompletableFuture<Workspace> workspace(Path path);
-    
+
     /**
      * Closes the Yaks api
      */
@@ -83,8 +79,8 @@ public interface Yaks {
     /**
      * Logout of the Yaks api
      */
-	public void logout();
-	
-	public SocketChannel getChannel();
-    
+    public void logout();
+
+    public SocketChannel getChannel();
+
 }

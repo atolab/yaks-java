@@ -8,20 +8,19 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
  * Yaks API entrypoint.
  */
 public interface Yaks {
 
-//	public static Runtime rt = null;
-	
-	public static int DEFAUL_PORT = 7887;
+    // public static Runtime rt = null;
+
+    public static int DEFAUL_PORT = 7887;
 
     public Logger logger = LoggerFactory.getLogger(Yaks.class);
-    
+
     public Yaks yaks = null;
-    
+
     /**
      * Static operation to get an instance of a Yaks implementation.
      * 
@@ -66,37 +65,33 @@ public interface Yaks {
     }
 
     /**
-     * Establish a session with the Yaks instance reachable through the
-     * provided *locator*.
+     * Establish a session with the Yaks instance reachable through the provided *locator*.
      * 
-     * Valid format for the locator are valid  IP addresses as well
-     * as the combination IP:PORT.
+     * Valid format for the locator are valid IP addresses as well as the combination IP:PORT.
      */
     public Yaks login(Properties properties);
-    
+
     /**
-     * Creates a workspace relative to the provided **path**.
-     * Any *put* or *get* operation with relative paths on this workspace
-     * will be prepended with the workspace *path*.
+     * Creates a workspace relative to the provided **path**. Any *put* or *get* operation with relative paths on this
+     * workspace will be prepended with the workspace *path*.
      * 
      */
     public Workspace workspace(Path path);
-    
+
     /**
      * Terminates this session.
      */
     public void logout();
-    
+
     /**
-     * Creates an admin workspace that provides helper operations to
-     * administer Yaks.
+     * Creates an admin workspace that provides helper operations to administer Yaks.
      */
     public Admin admin();
-    
+
     /**
      * Closes the Yaks api
      */
     public void close();
-        
+
     public SocketChannel getChannel();
 }

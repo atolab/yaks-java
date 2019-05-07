@@ -7,416 +7,396 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import is.yaks.Listener;
-import is.yaks.Message;
 import is.yaks.Path;
 import is.yaks.Selector;
 import is.yaks.Value;
-import is.yaks.async.Yaks;
 import is.yaks.async.Workspace;
-import is.yaks.socket.messages.MessageFactory;
+import is.yaks.async.Yaks;
+import is.yaks.socket.lib.Message;
+import is.yaks.socket.lib.MessageFactory;
+import is.yaks.socket.lib.YaksRuntime;
 import is.yaks.socket.utils.VLEEncoder;
 import is.yaks.utils.MessageCode;
 
 public class WorkspaceImpl implements Workspace {
 
-	public Path path =  null;
-	public int wsid = 0;
+    public Path path = null;
+    public int wsid = 0;
 
-	private static WorkspaceImpl instance;
-	YaksRuntime rt = null;
-	static SocketChannel sock = null;
+    private static WorkspaceImpl instance;
+    YaksRuntime rt = YaksRuntime.getInstance();
+    static SocketChannel sock = null;
 
-	public WorkspaceImpl(){
-		Yaks yaks = YaksImpl.getInstance();
-		sock = yaks.getChannel();
-	}
+    public WorkspaceImpl() {
+        Yaks yaks = YaksImpl.getInstance();
+        sock = yaks.getChannel();
+    }
 
-	public static synchronized Workspace getInstance() 
-	{
-		if( instance == null ) 
-		{
-			instance = new WorkspaceImpl();
-		}
-		return instance;
-	}
+    public static synchronized Workspace getInstance() {
+        if (instance == null) {
+            instance = new WorkspaceImpl();
+        }
+        return instance;
+    }
 
-	@Override
-	public CompletableFuture<Boolean> put(Path p, Value v, int quorum) {
+    @Override
+    public CompletableFuture<Boolean> put(Path p, Value v, int quorum) {
 
-		CompletableFuture<Boolean> is_put_ok = new CompletableFuture<Boolean>();
-		try {	
-			Message putM = new  MessageFactory().getMessage(MessageCode.PUT, null);
-			putM.add_property(Message.WSID, String.valueOf(wsid));
-			putM.add_workspace(p, v);
-			if(sock!=null) {
-				putM.write(sock, putM);
-				//==>			
-				int vle = 0;
-				while(vle == 0) {
-					vle = VLEEncoder.read_vle(sock);
-					Thread.sleep(YaksImpl.TIMEOUT);
-				}
-				if(vle > 0) {
-					//	read response msg
-					System.out.println("==> [vle-put]:" +vle);
-					ByteBuffer buffer = ByteBuffer.allocate(vle);
-					sock.read(buffer);
-					Message msgReply = putM.read(buffer);
+        CompletableFuture<Boolean> is_put_ok = new CompletableFuture<Boolean>();
+        try {
+            Message putM = new MessageFactory().getMessage(MessageCode.PUT, null);
+            putM.add_property(Message.WSID, String.valueOf(wsid));
+            putM.add_workspace(p, v);
+            if (sock != null) {
+                rt.write(sock, putM);
+                // ==>
+                int vle = 0;
+                while (vle == 0) {
+                    vle = VLEEncoder.read_vle(sock);
+                    Thread.sleep(YaksImpl.TIMEOUT);
+                }
+                if (vle > 0) {
+                    // read response msg
+                    ByteBuffer buffer = ByteBuffer.allocate(vle);
+                    sock.read(buffer);
+                    Message msgReply = rt.read(buffer);
 
-					if((msgReply !=null) && (msgReply.getMessageCode().equals(MessageCode.OK))) 
-					{
-						is_put_ok.complete(true);
-					}
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		return is_put_ok;
-	}
+                    if ((msgReply != null) && (msgReply.getMessageCode().equals(MessageCode.OK))) {
+                        is_put_ok.complete(true);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return is_put_ok;
+    }
 
-	@Override
-	public CompletableFuture<Void> update() {
-		return null;
-	}
+    @Override
+    public CompletableFuture<Void> update() {
+        return null;
+    }
 
-	@Override
-	public CompletableFuture<Map<Path, Value>> get(Selector select, int quorum) {
+    @Override
+    public CompletableFuture<Map<Path, Value>> get(Selector select, int quorum) {
 
-		CompletableFuture<Map<Path, Value>> kvs = new CompletableFuture<Map<Path, Value>>();
-		try {	
+        CompletableFuture<Map<Path, Value>> kvs = new CompletableFuture<Map<Path, Value>>();
+        try {
 
+            Message getM = new MessageFactory().getMessage(MessageCode.GET, null);
 
-			Message getM = new  MessageFactory().getMessage(MessageCode.GET, null);
+            getM.add_property(Message.WSID, String.valueOf(wsid));
+            getM.add_selector(select);
+            if (sock != null) {
+                rt.write(sock, getM);
 
-			getM.add_property(Message.WSID, String.valueOf(wsid));
-			getM.add_selector(select);
-			if(sock!=null) {
-				getM.write(sock, getM);
+                // ==>
+                int vle = 0;
+                while (vle == 0) {
+                    vle = VLEEncoder.read_vle(sock);
+                    Thread.sleep(YaksImpl.TIMEOUT);
+                }
+                if (vle > 0) {
+                    // read response msg
+                    ByteBuffer buffer = ByteBuffer.allocate(vle);
+                    sock.read(buffer);
+                    Message msgReply = rt.read(buffer);
 
-				//==>			
-				int vle = 0;
-				while(vle == 0) {
-					vle = VLEEncoder.read_vle(sock);
-					Thread.sleep(YaksImpl.TIMEOUT);
-				}
-				if(vle > 0) {
-					//	read response msg
-					System.out.println("==> [vle-get]:" +vle);
-					ByteBuffer buffer = ByteBuffer.allocate(vle);
-					sock.read(buffer);
-					Message msgReply = getM.read(buffer);
+                    if ((msgReply != null) && (msgReply.getMessageCode().equals(MessageCode.VALUES))) {
+                        if (!((Message) msgReply).getValuesList().isEmpty()) {
+                            kvs.complete(msgReply.getValuesList());
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return kvs;
+    }
 
-					if((msgReply !=null) && (msgReply.getMessageCode().equals(MessageCode.VALUES))) 
-					{	
-						if(!((Message) msgReply).getValuesList().isEmpty())
-						{
-							kvs.complete(msgReply.getValuesList());
-						}
-					}
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		return kvs;
-	}
+    @Override
+    public CompletableFuture<Boolean> remove(Path path, int quorum) {
 
-	@Override
-	public CompletableFuture<Boolean> remove(Path path, int quorum) {
+        CompletableFuture<Boolean> is_remove_ok = new CompletableFuture<Boolean>();
 
-		CompletableFuture<Boolean> is_remove_ok = new CompletableFuture<Boolean>();
+        try {
 
-		try {	
+            Message deleteM = new MessageFactory().getMessage(MessageCode.DELETE, null);
 
-			Message deleteM = new  MessageFactory().getMessage(MessageCode.DELETE, null);
+            deleteM.add_property(Message.WSID, String.valueOf(wsid));
+            deleteM.setPath(path);
+            if (sock != null) {
+                rt.write(sock, deleteM);
 
-			deleteM.add_property(Message.WSID, String.valueOf(wsid));
-			deleteM.setPath(path);
-			if(sock!=null) {
-				deleteM.write(sock, deleteM);
+                // ==>
+                int vle = 0;
+                while (vle == 0) {
+                    vle = VLEEncoder.read_vle(sock);
+                    Thread.sleep(YaksImpl.TIMEOUT);
+                }
+                if (vle > 0) {
+                    // read response msg
+                    ByteBuffer buffer2 = ByteBuffer.allocate(vle);
+                    sock.read(buffer2);
+                    Message msgReply = rt.read(buffer2);
 
-				//==>			
-				int vle = 0;
-				while(vle == 0) {
-					vle = VLEEncoder.read_vle(sock);
-					Thread.sleep(YaksImpl.TIMEOUT);
-				}
-				if(vle > 0) {
-					//	read response msg
-					System.out.println("==> [vle-remove]:" +vle);
-					ByteBuffer buffer2 = ByteBuffer.allocate(vle);
-					sock.read(buffer2);
-					Message msgReply = deleteM.read(buffer2);
+                    if (msgReply.getMessageCode().equals(MessageCode.OK)) {
+                        is_remove_ok.complete(true);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return is_remove_ok;
+    }
 
-					if(msgReply.getMessageCode().equals(MessageCode.OK)) 
-					{	
-						is_remove_ok.complete(true);
-					}
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}	
-		return is_remove_ok;
-	}
+    @Override
+    public CompletableFuture<String> subscribe(Selector selector, Listener listener) {
+        CompletableFuture<String> subid = new CompletableFuture<String>();
+        try {
 
-	@Override
-	public CompletableFuture<String> subscribe(Selector selector, Listener listener) {
-		CompletableFuture<String> subid = new CompletableFuture<String>();
-		try {	
+            Message subscribeM = new MessageFactory().getMessage(MessageCode.SUB, null);
+            subscribeM.add_property(Message.WSID, String.valueOf(wsid));
+            subscribeM.setPath(Path.ofString(selector.toString()));
+            if (sock != null) {
+                rt.write(sock, subscribeM);
 
-			Message subscribeM = new  MessageFactory().getMessage(MessageCode.SUB, null);
-			subscribeM.add_property(Message.WSID, String.valueOf(wsid));
-			subscribeM.setPath(Path.ofString(selector.toString()));
-			if(sock!=null) {
-				subscribeM.write(sock, subscribeM);
+                // ==>
+                int vle = 0;
+                while (vle == 0) {
+                    vle = VLEEncoder.read_vle(sock);
+                    Thread.sleep(YaksImpl.TIMEOUT);
+                }
+                if (vle > 0) {
+                    // read response msg
+                    ByteBuffer buffer = ByteBuffer.allocate(vle);
+                    sock.read(buffer);
+                    Message msgReply = rt.read(buffer);
 
-				//==>			
-				int vle = 0;
-				while(vle == 0) {
-					vle = VLEEncoder.read_vle(sock);
-					Thread.sleep(YaksImpl.TIMEOUT);
-				}
-				if(vle > 0) {
-					//	read response msg
-					System.out.println("==> [vle-subscribe]:" +vle);
-					ByteBuffer buffer = ByteBuffer.allocate(vle);
-					sock.read(buffer);
-					Message msgReply = subscribeM.read(buffer);
+                    if (msgReply.getMessageCode().equals(MessageCode.OK)) {
+                        subid.complete(msgReply.getPropertiesList().get(Message.SUBID));
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
-					if(msgReply.getMessageCode().equals(MessageCode.OK)) 
-					{
-						subid.complete(msgReply.getPropertiesList().get(Message.SUBID));
-					}
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}		
+        return subid;
+    }
 
-		return subid;
-	}
+    @Override
+    public CompletableFuture<String> subscribe(Selector selector) {
+        CompletableFuture<String> subid = new CompletableFuture<String>();
+        try {
 
-	@Override
-	public CompletableFuture<String> subscribe(Selector selector) {
-		CompletableFuture<String> subid = new CompletableFuture<String>();
-		try {	
+            Message subscribeM = new MessageFactory().getMessage(MessageCode.SUB, null);
+            subscribeM.add_property(Message.WSID, String.valueOf(wsid));
+            subscribeM.setPath(Path.ofString(selector.toString()));
+            if (sock != null) {
+                rt.write(sock, subscribeM);
 
-			Message subscribeM = new  MessageFactory().getMessage(MessageCode.SUB, null);
-			subscribeM.add_property(Message.WSID, String.valueOf(wsid));
-			subscribeM.setPath(Path.ofString(selector.toString()));
-			if(sock!=null) {
-				subscribeM.write(sock, subscribeM);
+                // ==>
+                int vle = 0;
+                while (vle == 0) {
+                    vle = VLEEncoder.read_vle(sock);
+                    Thread.sleep(YaksImpl.TIMEOUT);
+                }
+                if (vle > 0) {
+                    // read response msg
+                    ByteBuffer buffer = ByteBuffer.allocate(vle);
+                    sock.read(buffer);
+                    Message msgReply = rt.read(buffer);
 
-				//==>			
-				int vle = 0;
-				while(vle == 0) {
-					vle = VLEEncoder.read_vle(sock);
-					Thread.sleep(YaksImpl.TIMEOUT);
-				} 
-				if(vle > 0) {
-					//	read response msg
-					System.out.println("==> [vle-subscribe]:" +vle);
-					ByteBuffer buffer = ByteBuffer.allocate(vle);
-					sock.read(buffer);
-					Message msgReply = subscribeM.read(buffer);
+                    if (msgReply.getMessageCode().equals(MessageCode.OK)) {
+                        subid.complete(msgReply.getPropertiesList().get(Message.SUBID));
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
-					if(msgReply.getMessageCode().equals(MessageCode.OK)) 
-					{
-						subid.complete(msgReply.getPropertiesList().get(Message.SUBID));
-					}
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}	
+        return subid;
+    }
 
-		return subid;
-	}
+    @Override
+    public CompletableFuture<Boolean> unsubscribe(String subid) {
+        CompletableFuture<Boolean> is_unsub_ok = new CompletableFuture<Boolean>();
+        try {
 
-	@Override
-	public CompletableFuture<Boolean> unsubscribe(String subid) {
-		CompletableFuture<Boolean> is_unsub_ok = new CompletableFuture<Boolean>();
-		try {	
+            Message unsubM = new MessageFactory().getMessage(MessageCode.UNSUB, null);
+            unsubM.add_property(Message.WSID, String.valueOf(wsid));
+            unsubM.setPath(Path.ofString(subid.toString()));
+            if (sock != null) {
+                rt.write(sock, unsubM);
+                // ==>
+                int vle = 0;
+                while (vle == 0) {
+                    vle = VLEEncoder.read_vle(sock);
+                    Thread.sleep(YaksImpl.TIMEOUT);
+                }
+                if (vle > 0) {
+                    // read response msg
+                    ByteBuffer buffer = ByteBuffer.allocate(vle);
+                    sock.read(buffer);
+                    Message msgReply = rt.read(buffer);
 
-			Message unsubM = new  MessageFactory().getMessage(MessageCode.UNSUB, null);
-			unsubM.add_property(Message.WSID, String.valueOf(wsid));
-			unsubM.setPath(Path.ofString(subid.toString()));
-			if(sock!=null) {
-				unsubM.write(sock, unsubM);
-				//==>			
-				int vle = 0;
-				while(vle == 0) {
-					vle = VLEEncoder.read_vle(sock);
-					Thread.sleep(YaksImpl.TIMEOUT);
-				} 
-				if(vle > 0) {
-					//read response msg
-					System.out.println("==> [vle-unsubscribe]:" +vle);
-					ByteBuffer buffer = ByteBuffer.allocate(vle);
-					sock.read(buffer);
-					Message msgReply = unsubM.read(buffer);
+                    if (msgReply.getMessageCode().equals(MessageCode.OK)) {
+                        is_unsub_ok.complete(true);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return is_unsub_ok;
+    }
 
-					if(msgReply.getMessageCode().equals(MessageCode.OK)) 
-					{
-						is_unsub_ok.complete(true);
-					}
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}	
-		return is_unsub_ok;
-	}
+    @Override
+    public CompletableFuture<Boolean> register_eval(Path path, Listener evcb) {
+        CompletableFuture<Boolean> is_regeval_ok = new CompletableFuture<Boolean>();
+        try {
 
-	@Override
-	public CompletableFuture<Boolean> register_eval(Path path, Listener evcb) {
-		CompletableFuture<Boolean> is_regeval_ok = new CompletableFuture<Boolean>();
-		try {	
+            Message regEvalM = new MessageFactory().getMessage(MessageCode.REG_EVAL, null);
+            regEvalM.add_property(Message.WSID, String.valueOf(wsid));
+            regEvalM.setPath(Path.ofString(path.toString()));
+            if (sock != null) {
+                rt.write(sock, regEvalM);
+                // ==>
+                int vle = 0;
+                while (vle == 0) {
+                    vle = VLEEncoder.read_vle(sock);
+                    Thread.sleep(YaksImpl.TIMEOUT);
+                }
+                if (vle > 0) {
+                    // read response msg
+                    ByteBuffer buffer = ByteBuffer.allocate(vle);
+                    sock.read(buffer);
+                    Message msgReply = rt.read(buffer);
 
-			Message regEvalM = new  MessageFactory().getMessage(MessageCode.REG_EVAL, null);
-			regEvalM.add_property(Message.WSID, String.valueOf(wsid));
-			regEvalM.setPath(Path.ofString(path.toString()));
-			if(sock!=null) {
-				regEvalM.write(sock, regEvalM);
-				//==>			
-				int vle = 0;
-				while(vle == 0) {
-					vle = VLEEncoder.read_vle(sock);
-					Thread.sleep(YaksImpl.TIMEOUT);
-				} 			
-				if(vle > 0) {
-					//read response msg
-					System.out.println("==> [vle-reg_eval]:" +vle);
-					ByteBuffer buffer = ByteBuffer.allocate(vle);
-					sock.read(buffer);
-					Message msgReply = regEvalM.read(buffer);
+                    if (msgReply.getMessageCode().equals(MessageCode.OK)) {
+                        is_regeval_ok.complete(true);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return is_regeval_ok;
+    }
 
-					if(msgReply.getMessageCode().equals(MessageCode.OK)) 
-					{
-						is_regeval_ok.complete(true);
-					}
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		return is_regeval_ok;
-	}
+    @Override
+    public CompletableFuture<Boolean> unregister_eval(Path path) {
 
-	@Override
-	public CompletableFuture<Boolean> unregister_eval(Path path) {
+        CompletableFuture<Boolean> is_unregeval_ok = new CompletableFuture<Boolean>();
+        try {
 
-		CompletableFuture<Boolean> is_unregeval_ok = new CompletableFuture<Boolean>();
-		try {	
+            Message unreg_evalM = new MessageFactory().getMessage(MessageCode.UNREG_EVAL, null);
+            unreg_evalM.add_property(Message.WSID, String.valueOf(wsid));
+            unreg_evalM.setPath(Path.ofString(path.toString()));
+            if (sock != null) {
+                rt.write(sock, unreg_evalM);
 
-			Message unreg_evalM = new  MessageFactory().getMessage(MessageCode.UNREG_EVAL, null);
-			unreg_evalM.add_property(Message.WSID, String.valueOf(wsid));
-			unreg_evalM.setPath(Path.ofString(path.toString()));
-			if(sock!=null) {
-				unreg_evalM.write(sock, unreg_evalM);
+                // ==>
+                int vle = 0;
+                while (vle == 0) {
+                    vle = VLEEncoder.read_vle(sock);
+                    Thread.sleep(YaksImpl.TIMEOUT);
+                }
+                if (vle > 0) {
+                    // read response msg
+                    ByteBuffer buffer = ByteBuffer.allocate(vle);
+                    sock.read(buffer);
+                    Message msgReply = rt.read(buffer);
 
-				//==>			
-				int vle = 0;
-				while(vle == 0) {
-					vle = VLEEncoder.read_vle(sock);
-					Thread.sleep(YaksImpl.TIMEOUT);
-				} 
-				if(vle > 0) {
-					//read response msg
-					System.out.println("==> [vle-unreg_eval]:" +vle);
-					ByteBuffer buffer = ByteBuffer.allocate(vle);
-					sock.read(buffer);
-					Message msgReply = unreg_evalM.read(buffer);
+                    if (msgReply.getMessageCode().equals(MessageCode.OK)) {
+                        is_unregeval_ok.complete(true);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return is_unregeval_ok;
+    }
 
-					if(msgReply.getMessageCode().equals(MessageCode.OK)) 
-					{
-						is_unregeval_ok.complete(true);
-					}
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		return is_unregeval_ok;
-	}
+    @Override
+    public CompletableFuture<String> eval(Selector selector) {
+        CompletableFuture<String> values = null;
+        try {
 
-	@Override
-	public CompletableFuture<String> eval(Selector selector) {
-		CompletableFuture<String> values = null;
-		try {	
+            Message evalM = new MessageFactory().getMessage(MessageCode.EVAL, null);
+            evalM.add_property(Message.WSID, String.valueOf(wsid));
+            evalM.setSelector(selector);
+            if (sock != null) {
+                rt.write(sock, evalM);
 
-			Message evalM = new  MessageFactory().getMessage(MessageCode.EVAL, null);
-			evalM.add_property(Message.WSID, String.valueOf(wsid));
-			evalM.setSelector(selector);
-			if(sock!=null) {
-				evalM.write(sock, evalM);
+                // ==>
+                int vle = 0;
+                while (vle == 0) {
+                    vle = VLEEncoder.read_vle(sock);
+                    Thread.sleep(YaksImpl.TIMEOUT);
+                }
+                if (vle > 0) {
+                    // read response msg
+                    ByteBuffer buffer = ByteBuffer.allocate(vle);
+                    sock.read(buffer);
+                    Message msgReply = rt.read(buffer);
 
-				//==>			
-				int vle = 0;
-				while(vle == 0) {
-					vle = VLEEncoder.read_vle(sock);
-					Thread.sleep(YaksImpl.TIMEOUT);
-				} 
-				if(vle > 0) {
-					//read response msg
-					System.out.println("==> [vle-eval]:" +vle);
-					ByteBuffer buffer = ByteBuffer.allocate(vle);
-					sock.read(buffer);
-					Message msgReply = evalM.read(buffer);
+                    if (msgReply != null && msgReply.getMessageCode().equals(MessageCode.VALUES)) {
+                        if (!msgReply.getValuesList().isEmpty()) {
 
-					if(msgReply != null && msgReply.getMessageCode().equals(MessageCode.VALUES)) 
-					{
-						if(!msgReply.getValuesList().isEmpty()){
+                            for (Map.Entry<Path, Value> pair : ((Message) msgReply).getValuesList().entrySet()) {
+                                values.complete("(" + pair.getKey().toString() + ", "
+                                        + pair.getValue().getValue().toString() + ")");
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
-							for (Map.Entry<Path, Value> pair : ((Message) msgReply).getValuesList().entrySet()) {
-								values.complete("(" + pair.getKey().toString() +", " +  pair.getValue().getValue().toString()+")");
-							}
-						}
-					}
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+        return values;
+    }
 
-		return values;
-	}
+    public void setPath(Path p) {
+        path = p;
+    }
 
-	public void setPath(Path p) {
-		path = p;
-	}
+    public Path getPath() {
+        return path;
+    }
 
-	public Path getPath() {
-		return path;
-	}
+    @Override
+    public void setWsid(int id) {
+        wsid = id;
+    }
 
-	@Override
-	public void setWsid(int id) {
-		wsid = id;
-	}
-
-	@Override
-	public int getWsid() {
-		return wsid;
-	}
+    @Override
+    public int getWsid() {
+        return wsid;
+    }
 }
