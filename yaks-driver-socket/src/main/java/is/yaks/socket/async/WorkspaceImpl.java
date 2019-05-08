@@ -8,15 +8,15 @@ import java.util.concurrent.CompletableFuture;
 
 import is.yaks.Listener;
 import is.yaks.Path;
-import is.yaks.Selector;
+import is.yaks.YSelector;
 import is.yaks.Value;
 import is.yaks.async.Workspace;
 import is.yaks.async.Yaks;
-import is.yaks.socket.lib.Message;
-import is.yaks.socket.lib.MessageFactory;
-import is.yaks.socket.lib.YaksRuntime;
+import is.yaks.socket.YaksRuntimeImpl;
+import is.yaks.socket.types.Message;
+import is.yaks.socket.types.MessageCode;
+import is.yaks.socket.types.MessageFactory;
 import is.yaks.socket.utils.VLEEncoder;
-import is.yaks.utils.MessageCode;
 
 public class WorkspaceImpl implements Workspace {
 
@@ -24,12 +24,12 @@ public class WorkspaceImpl implements Workspace {
     public int wsid = 0;
 
     private static WorkspaceImpl instance;
-    YaksRuntime rt = YaksRuntime.getInstance();
+    YaksRuntimeImpl rt = YaksRuntimeImpl.getInstance();
     static SocketChannel sock = null;
 
     public WorkspaceImpl() {
-        Yaks yaks = YaksImpl.getInstance();
-        sock = yaks.getChannel();
+        Yaks yaks = AsyncYaksImpl.getInstance();
+        // sock = yaks.getChannel();
     }
 
     public static synchronized Workspace getInstance() {
@@ -53,7 +53,7 @@ public class WorkspaceImpl implements Workspace {
                 int vle = 0;
                 while (vle == 0) {
                     vle = VLEEncoder.read_vle(sock);
-                    Thread.sleep(YaksImpl.TIMEOUT);
+                    Thread.sleep(AsyncYaksImpl.TIMEOUT);
                 }
                 if (vle > 0) {
                     // read response msg
@@ -80,7 +80,7 @@ public class WorkspaceImpl implements Workspace {
     }
 
     @Override
-    public CompletableFuture<Map<Path, Value>> get(Selector select, int quorum) {
+    public CompletableFuture<Map<Path, Value>> get(YSelector select, int quorum) {
 
         CompletableFuture<Map<Path, Value>> kvs = new CompletableFuture<Map<Path, Value>>();
         try {
@@ -96,7 +96,7 @@ public class WorkspaceImpl implements Workspace {
                 int vle = 0;
                 while (vle == 0) {
                     vle = VLEEncoder.read_vle(sock);
-                    Thread.sleep(YaksImpl.TIMEOUT);
+                    Thread.sleep(AsyncYaksImpl.TIMEOUT);
                 }
                 if (vle > 0) {
                     // read response msg
@@ -137,7 +137,7 @@ public class WorkspaceImpl implements Workspace {
                 int vle = 0;
                 while (vle == 0) {
                     vle = VLEEncoder.read_vle(sock);
-                    Thread.sleep(YaksImpl.TIMEOUT);
+                    Thread.sleep(AsyncYaksImpl.TIMEOUT);
                 }
                 if (vle > 0) {
                     // read response msg
@@ -159,7 +159,7 @@ public class WorkspaceImpl implements Workspace {
     }
 
     @Override
-    public CompletableFuture<String> subscribe(Selector selector, Listener listener) {
+    public CompletableFuture<String> subscribe(YSelector selector, Listener listener) {
         CompletableFuture<String> subid = new CompletableFuture<String>();
         try {
 
@@ -173,7 +173,7 @@ public class WorkspaceImpl implements Workspace {
                 int vle = 0;
                 while (vle == 0) {
                     vle = VLEEncoder.read_vle(sock);
-                    Thread.sleep(YaksImpl.TIMEOUT);
+                    Thread.sleep(AsyncYaksImpl.TIMEOUT);
                 }
                 if (vle > 0) {
                     // read response msg
@@ -196,7 +196,7 @@ public class WorkspaceImpl implements Workspace {
     }
 
     @Override
-    public CompletableFuture<String> subscribe(Selector selector) {
+    public CompletableFuture<String> subscribe(YSelector selector) {
         CompletableFuture<String> subid = new CompletableFuture<String>();
         try {
 
@@ -210,7 +210,7 @@ public class WorkspaceImpl implements Workspace {
                 int vle = 0;
                 while (vle == 0) {
                     vle = VLEEncoder.read_vle(sock);
-                    Thread.sleep(YaksImpl.TIMEOUT);
+                    Thread.sleep(AsyncYaksImpl.TIMEOUT);
                 }
                 if (vle > 0) {
                     // read response msg
@@ -246,7 +246,7 @@ public class WorkspaceImpl implements Workspace {
                 int vle = 0;
                 while (vle == 0) {
                     vle = VLEEncoder.read_vle(sock);
-                    Thread.sleep(YaksImpl.TIMEOUT);
+                    Thread.sleep(AsyncYaksImpl.TIMEOUT);
                 }
                 if (vle > 0) {
                     // read response msg
@@ -281,7 +281,7 @@ public class WorkspaceImpl implements Workspace {
                 int vle = 0;
                 while (vle == 0) {
                     vle = VLEEncoder.read_vle(sock);
-                    Thread.sleep(YaksImpl.TIMEOUT);
+                    Thread.sleep(AsyncYaksImpl.TIMEOUT);
                 }
                 if (vle > 0) {
                     // read response msg
@@ -318,7 +318,7 @@ public class WorkspaceImpl implements Workspace {
                 int vle = 0;
                 while (vle == 0) {
                     vle = VLEEncoder.read_vle(sock);
-                    Thread.sleep(YaksImpl.TIMEOUT);
+                    Thread.sleep(AsyncYaksImpl.TIMEOUT);
                 }
                 if (vle > 0) {
                     // read response msg
@@ -340,7 +340,7 @@ public class WorkspaceImpl implements Workspace {
     }
 
     @Override
-    public CompletableFuture<String> eval(Selector selector) {
+    public CompletableFuture<String> eval(YSelector selector) {
         CompletableFuture<String> values = null;
         try {
 
@@ -354,7 +354,7 @@ public class WorkspaceImpl implements Workspace {
                 int vle = 0;
                 while (vle == 0) {
                     vle = VLEEncoder.read_vle(sock);
-                    Thread.sleep(YaksImpl.TIMEOUT);
+                    Thread.sleep(AsyncYaksImpl.TIMEOUT);
                 }
                 if (vle > 0) {
                     // read response msg

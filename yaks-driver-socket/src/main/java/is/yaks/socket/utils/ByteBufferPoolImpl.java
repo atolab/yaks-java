@@ -4,8 +4,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import is.yaks.utils.ByteBufferPool;
-
 public class ByteBufferPoolImpl implements ByteBufferPool {
 
     private ByteBuffer buffer;
@@ -17,7 +15,7 @@ public class ByteBufferPoolImpl implements ByteBufferPool {
 
     private final int max_buffer_size = 64 * 1024;
 
-    final List<ByteBuffer>[] potBuffers;
+    private List<ByteBuffer>[] potBuffers;
 
     @SuppressWarnings("unchecked")
     public ByteBufferPoolImpl() {
@@ -29,9 +27,13 @@ public class ByteBufferPoolImpl implements ByteBufferPool {
 
     /** creates a new pool with at most n elements */
     @Override
-    public ByteBuffer create(int n) {
+    public List<ByteBuffer>[] create(int n) {
 
-        return null;
+        potBuffers = (List<ByteBuffer>[]) new List[n];
+        for (List<ByteBuffer> bb : potBuffers) {
+            bb = new ArrayList<ByteBuffer>(max_buffer_size);
+        }
+        return potBuffers;
     }
 
     /** requests one free element of the pool p */

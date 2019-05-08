@@ -1,11 +1,12 @@
-package is.yaks.utils;
+package is.yaks.socket.utils;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 public interface ByteBufferPool {
 
     /** creates a new pool with at most n elements */
-    public ByteBuffer create(int n);
+    public List<ByteBuffer>[] create(int n);
 
     public ByteBuffer create_bigstring(int length);
 

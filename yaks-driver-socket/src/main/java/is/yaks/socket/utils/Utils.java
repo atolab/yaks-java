@@ -13,13 +13,13 @@ import org.slf4j.LoggerFactory;
 import is.yaks.Encoding;
 import is.yaks.Path;
 import is.yaks.Value;
-import is.yaks.socket.lib.MessageImpl;
+import is.yaks.socket.types.MessageImpl;
 
 public class Utils {
 
     public static final Logger LOG = LoggerFactory.getLogger(Utils.class);
 
-    private static int max_buffer_size = (2 * 1024);
+    private static int max_buffer_size = (64 * 1024);
 
     private Utils() {
         // nothing to do, just hides the implicit public one
@@ -152,5 +152,11 @@ public class Utils {
 
     public static byte[] toByteArray(int value) {
         return new byte[] { (byte) (value >> 24), (byte) (value >> 16), (byte) (value >> 8), (byte) value };
+    }
+
+    public static void printHex(byte[] bytes) {
+        for (int i = 0; i < bytes.length; i++)
+            System.out.print(Integer.toHexString(Byte.toUnsignedInt(bytes[i])) + " ");
+        System.out.println();
     }
 }

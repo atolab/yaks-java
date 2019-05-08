@@ -83,7 +83,7 @@ public interface Admin {
      * 
      * @return is_reply_ok
      */
-    public boolean add_storage(String stid, Properties properties, String beid, Yaks yaks);
+    public void add_storage(String stid, Properties properties, String beid, Yaks yaks);
 
     /**
      * Gets the storage with id **stid** on the Yaks instance with UUID **yaks**.

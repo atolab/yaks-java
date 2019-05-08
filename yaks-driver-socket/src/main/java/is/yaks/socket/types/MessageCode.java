@@ -1,4 +1,4 @@
-package is.yaks.utils;
+package is.yaks.socket.types;
 
 public enum MessageCode {
 

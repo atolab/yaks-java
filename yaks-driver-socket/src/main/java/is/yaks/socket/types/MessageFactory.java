@@ -1,8 +1,6 @@
-package is.yaks.socket.lib;
+package is.yaks.socket.types;
 
 import java.util.Properties;
-
-import is.yaks.utils.MessageCode;
 
 public class MessageFactory {
 

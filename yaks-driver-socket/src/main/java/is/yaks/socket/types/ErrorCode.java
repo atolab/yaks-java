@@ -1,4 +1,4 @@
-package is.yaks.utils;
+package is.yaks.socket.types;
 
 public enum ErrorCode {
     BAD_REQUEST(400), FORBIDDEN(403), NOT_FOUND(404), PRECONDITION_FAILED(412), NOT_IMPLEMENTED(

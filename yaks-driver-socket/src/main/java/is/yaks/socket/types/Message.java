@@ -1,11 +1,10 @@
-package is.yaks.socket.lib;
+package is.yaks.socket.types;
 
 import java.util.Map;
 
 import is.yaks.Path;
-import is.yaks.Selector;
+import is.yaks.YSelector;
 import is.yaks.Value;
-import is.yaks.utils.MessageCode;
 
 public interface Message {
 
@@ -74,7 +73,7 @@ public interface Message {
      * 
      * @param selector
      */
-    public void add_selector(Selector selector);
+    public void add_selector(YSelector selector);
 
     /**
      * Add a message's properties
@@ -119,14 +118,14 @@ public interface Message {
      * 
      * @return selector
      */
-    public Selector getSelector();
+    public YSelector getSelector();
 
     /**
      * Set the selector
      * 
      * @param selector
      */
-    public void setSelector(Selector selector);
+    public void setSelector(YSelector selector);
 
     /**
      * Get the Value
@@ -149,7 +148,7 @@ interface Header {
     static int P_FLAG = 0x01;
     static int FLAG_MASK = 0x01;
 
-    boolean has_flag();
+    boolean has_flag(int h, int f);
 
     boolean has_properties();
 

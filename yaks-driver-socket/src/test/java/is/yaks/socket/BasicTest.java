@@ -15,7 +15,7 @@ import is.yaks.Admin;
 import is.yaks.Encoding;
 import is.yaks.Listener;
 import is.yaks.Path;
-import is.yaks.Selector;
+import is.yaks.YSelector;
 import is.yaks.Value;
 import is.yaks.Workspace;
 import is.yaks.Yaks;
@@ -68,14 +68,14 @@ public class BasicTest {
             workspace = yaks.workspace(Path.ofString("/"));
             Assert.assertNotNull(workspace);
 
-            String subid = workspace.subscribe(Selector.ofString("/is.yaks.tests/*"), obs);
+            String subid = workspace.subscribe(YSelector.ofString("/is.yaks.tests/*"), obs);
             Assert.assertNotNull(subid);
 
             // put simple tuple
             workspace.put(Path.ofString("/is.yaks.tests/a"), new Value("ABC", Encoding.STRING), 0);
 
             // get object Value from key
-            Map<Path, Value> values = workspace.get(Selector.ofString("/is.yaks.tests/a"));
+            Map<Path, Value> values = workspace.get(YSelector.ofString("/is.yaks.tests/a"), 0);
             String strValue = "";
             try {
                 if (values != null) {

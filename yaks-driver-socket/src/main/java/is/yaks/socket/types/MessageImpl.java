@@ -1,4 +1,4 @@
-package is.yaks.socket.lib;
+package is.yaks.socket.types;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -7,11 +7,10 @@ import java.util.Properties;
 
 import is.yaks.Encoding;
 import is.yaks.Path;
-import is.yaks.Selector;
+import is.yaks.YSelector;
 import is.yaks.Value;
 import is.yaks.socket.utils.Utils;
 import is.yaks.socket.utils.VLEEncoder;
-import is.yaks.utils.MessageCode;
 
 public class MessageImpl implements Message {
     private static MessageImpl instance = null;
@@ -38,7 +37,7 @@ public class MessageImpl implements Message {
     Value value;
 
     ByteBuffer data;
-    Selector selector;
+    YSelector selector;
     Encoding encoding;
     MessageCode messageCode;
 
@@ -160,7 +159,7 @@ public class MessageImpl implements Message {
     }
 
     @Override
-    public void add_selector(Selector select) {
+    public void add_selector(YSelector select) {
         selector = select;
     }
 
@@ -192,12 +191,12 @@ public class MessageImpl implements Message {
     }
 
     @Override
-    public Selector getSelector() {
+    public YSelector getSelector() {
         return selector;
     }
 
     @Override
-    public void setSelector(Selector s) {
+    public void setSelector(YSelector s) {
         selector = s;
     }
 
@@ -212,20 +211,28 @@ public class MessageImpl implements Message {
     }
 }
 
-class HeaderMessage extends MessageImpl {
+class HeaderMessage implements Header {
 
     public static int P_FLAG = 0x01;
     public static int FLAGS_MASK = 0x01;
 
-    public HeaderMessage(int correlation_id, Properties properties) {
+    static int flags;
+    static int correlation_id;
+    static Properties properties;
 
+    public HeaderMessage(int corr_id, int f, Properties prop) {
+        correlation_id = corr_id;
+        flags = f;
+        properties = prop;
     }
 
-    public static boolean has_flag(int h, int f) {
+    @Override
+    public boolean has_flag(int h, int f) {
         return (h & f) != 0;
     }
 
-    public static boolean has_properties() {
+    @Override
+    public boolean has_properties() {
         return (flags & HeaderMessage.P_FLAG) != 0;
     }
 }

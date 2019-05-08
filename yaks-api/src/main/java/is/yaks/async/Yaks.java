@@ -2,7 +2,6 @@ package is.yaks.async;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.channels.SocketChannel;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 
@@ -80,7 +79,5 @@ public interface Yaks {
      * Logout of the Yaks api
      */
     public void logout();
-
-    public SocketChannel getChannel();
 
 }

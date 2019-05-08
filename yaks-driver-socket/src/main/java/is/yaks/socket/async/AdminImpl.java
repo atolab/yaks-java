@@ -7,7 +7,7 @@ import java.util.concurrent.CompletableFuture;
 
 import is.yaks.Encoding;
 import is.yaks.Path;
-import is.yaks.Selector;
+import is.yaks.YSelector;
 import is.yaks.Value;
 import is.yaks.async.Admin;
 import is.yaks.async.Workspace;
@@ -103,7 +103,7 @@ public class AdminImpl implements Admin {
 
         String p = "/" + Admin.PREFIX + "/" + Admin.MY_YAKS + "/backend/*/storage/" + stid;
 
-        CompletableFuture<Map<Path, Value>> kvs = workspace.get(Selector.ofString(p), quorum);
+        CompletableFuture<Map<Path, Value>> kvs = workspace.get(YSelector.ofString(p), quorum);
 
         // if(kvs.size() > 0) {
         // Iterator<Map.Entry<Path, Value>> it = kvs.entrySet().iterator();

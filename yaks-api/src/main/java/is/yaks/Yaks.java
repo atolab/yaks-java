@@ -2,7 +2,6 @@ package is.yaks;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.channels.SocketChannel;
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -13,13 +12,9 @@ import org.slf4j.LoggerFactory;
  */
 public interface Yaks {
 
-    // public static Runtime rt = null;
-
     public static int DEFAUL_PORT = 7887;
 
     public Logger logger = LoggerFactory.getLogger(Yaks.class);
-
-    public Yaks yaks = null;
 
     /**
      * Static operation to get an instance of a Yaks implementation.
@@ -72,16 +67,16 @@ public interface Yaks {
     public Yaks login(Properties properties);
 
     /**
+     * Terminates this session.
+     */
+    public void logout();
+
+    /**
      * Creates a workspace relative to the provided **path**. Any *put* or *get* operation with relative paths on this
      * workspace will be prepended with the workspace *path*.
      * 
      */
     public Workspace workspace(Path path);
-
-    /**
-     * Terminates this session.
-     */
-    public void logout();
 
     /**
      * Creates an admin workspace that provides helper operations to administer Yaks.
@@ -93,5 +88,4 @@ public interface Yaks {
      */
     public void close();
 
-    public SocketChannel getChannel();
 }

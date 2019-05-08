@@ -10,7 +10,7 @@ import java.util.concurrent.ExecutionException;
 import is.yaks.Encoding;
 import is.yaks.Listener;
 import is.yaks.Path;
-import is.yaks.Selector;
+import is.yaks.YSelector;
 import is.yaks.Value;
 import is.yaks.async.Admin;
 import is.yaks.async.Workspace;
@@ -29,7 +29,7 @@ public class AsyncSocketClient {
         try {
             // creating Yaks api
             System.out.println(">> Creating api");
-            yaks = YaksImpl.getInstance();
+            yaks = AsyncYaksImpl.getInstance();
 
             // listener = new Listener();
             String result = "";
@@ -59,7 +59,7 @@ public class AsyncSocketClient {
 
             workspace.put(Path.ofString("/myyaks/example/one"), new Value("hello!", Encoding.STRING), quorum);
 
-            CompletableFuture<Map<Path, Value>> kvsFuture = workspace.get(Selector.ofString("/myyaks/example/one"),
+            CompletableFuture<Map<Path, Value>> kvsFuture = workspace.get(YSelector.ofString("/myyaks/example/one"),
                     quorum);
             Map<Path, Value> kvs = kvsFuture.get();
             String strValue = "";

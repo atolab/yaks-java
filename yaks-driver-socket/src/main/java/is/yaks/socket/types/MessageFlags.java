@@ -1,4 +1,4 @@
-package is.yaks.utils;
+package is.yaks.socket.types;
 
 public enum MessageFlags {
     PROPERTY(0x01), STORAGE(0x02), ACCESS(0x04), ENCODING(0x38), ENCODING_RAW(0x08), ENCODING_JSON(

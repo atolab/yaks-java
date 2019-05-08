@@ -9,26 +9,28 @@ import java.util.Set;
 import is.yaks.Admin;
 import is.yaks.Encoding;
 import is.yaks.Path;
-import is.yaks.Selector;
+import is.yaks.YSelector;
 import is.yaks.Value;
 import is.yaks.Workspace;
 import is.yaks.Yaks;
 
 public class AdminImpl implements Admin {
 
-    private static AdminImpl instance;
+    private static AdminImpl admin;
 
     private static Workspace workspace;
+
+    // private YaksRuntimeImpl yaks_rt = YaksRuntimeImpl.getInstance();
 
     private AdminImpl() {
 
     }
 
     public static synchronized AdminImpl getInstance() {
-        if (instance == null) {
-            instance = new AdminImpl();
+        if (admin == null) {
+            admin = new AdminImpl();
         }
-        return instance;
+        return admin;
     }
 
     @Override
@@ -72,22 +74,16 @@ public class AdminImpl implements Admin {
     }
 
     @Override
-    public boolean add_storage(String stid, Properties properties, String beid, Yaks yaks) {
-
-        boolean is_reply_ok = false;
-
+    public void add_storage(String stid, Properties properties, String beid, Yaks yaks) {
+        int quorum = 0;
         if (beid.isEmpty()) {
             beid = "auto";
         }
-        String p = "/" + Admin.PREFIX + "/" + Admin.MY_YAKS + "/backend/" + beid + "/storage/" + stid;
+        String path = "/" + Admin.PREFIX + "/" + Admin.MY_YAKS + "/backend/" + beid + "/storage/" + stid;
 
-        Value v = new Value(properties.toString(), Encoding.PROPERTY);
+        Value value = new Value(properties.toString(), Encoding.PROPERTY);
 
-        int quorum = 1;
-
-        is_reply_ok = workspace.put(Path.ofString(p), v, quorum);
-
-        return is_reply_ok;
+        workspace.put(Path.ofString(path), value, quorum);
     }
 
     @Override
@@ -102,13 +98,14 @@ public class AdminImpl implements Admin {
 
     @Override
     public boolean remove_storage(String stid, Yaks yaks) {
-        boolean is_remove_ok = false;
         int quorum = 1;
+        boolean is_remove_ok = false;
+
         String p = "/" + Admin.PREFIX + "/" + Admin.MY_YAKS + "/backend/*/storage/" + stid;
 
         System.out.println("remove_storage: " + p);
 
-        Map<Path, Value> kvs = workspace.get(Selector.ofString(p));
+        Map<Path, Value> kvs = workspace.get(YSelector.ofString(p), quorum);
 
         if ((kvs != null) && (kvs.size() > 0)) {
             Iterator<Map.Entry<Path, Value>> it = kvs.entrySet().iterator();
@@ -136,12 +133,12 @@ public class AdminImpl implements Admin {
         return null;
     }
 
-    public Workspace getWorkspace() {
-        return workspace;
-    }
-
-    public void setWorkspace(Workspace workspace) {
-        AdminImpl.workspace = workspace;
+    // public Workspace getWorkspace() {
+    // return workspace;
+    // }
+    //
+    public void setWorkspace(Workspace ws) {
+        workspace = ws;
     }
 
 }

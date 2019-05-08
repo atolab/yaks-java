@@ -2,11 +2,11 @@ package is.yaks;
 
 import java.util.Map;
 
-public final class Selector implements Comparable<Selector> {
+public final class YSelector implements Comparable<YSelector> {
 
     private String path;
 
-    private Selector(String s) throws IllegalArgumentException {
+    private YSelector(String s) throws IllegalArgumentException {
         if (s == null) {
             throw new IllegalArgumentException("Provided selector string is null");
         }
@@ -18,8 +18,8 @@ public final class Selector implements Comparable<Selector> {
         // TODO: validate the selector string
     }
 
-    public static Selector ofString(String string) {
-        return new Selector(string);
+    public static YSelector ofString(String string) {
+        return new YSelector(string);
     }
 
     @Override
@@ -40,7 +40,7 @@ public final class Selector implements Comparable<Selector> {
     }
 
     @Override
-    public int compareTo(Selector o) {
+    public int compareTo(YSelector o) {
         return this.path.compareTo(o.path);
     }
 

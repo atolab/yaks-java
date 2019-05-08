@@ -9,7 +9,7 @@ import is.yaks.Admin;
 import is.yaks.Encoding;
 import is.yaks.Listener;
 import is.yaks.Path;
-import is.yaks.Selector;
+import is.yaks.YSelector;
 import is.yaks.Value;
 import is.yaks.Workspace;
 import is.yaks.Yaks;
@@ -50,7 +50,7 @@ public class SocketClient {
         // create workspace attached to the session
         System.out.println(">> create workspace and subscription");
         workspace = yaks.workspace(Path.ofString("/myyaks"));
-        String subid = workspace.subscribe(Selector.ofString("/myyaks/example/**"), obs);
+        String subid = workspace.subscribe(YSelector.ofString("/myyaks/example/**"), obs);
 
         System.out.println(">> Put Tuple 1 - subid: " + subid);
         workspace.put(Path.ofString("/myyaks/example/one"), new Value("hello!", Encoding.STRING), quorum);
@@ -70,7 +70,7 @@ public class SocketClient {
         // System.out.println("Called OBSERVER : "+listener.toString());
 
         System.out.println(">> Get Tuple 1");
-        Map<Path, Value> kvs = workspace.get(Selector.ofString("/myyaks/example/one"));
+        Map<Path, Value> kvs = workspace.get(YSelector.ofString("/myyaks/example/one"), 0);
         String strValue = "";
         if (kvs != null) {
             try {
@@ -86,7 +86,7 @@ public class SocketClient {
         System.out.println("GET: [" + strValue + "]");
 
         System.out.println(">> Get Tuple 2");
-        Map<Path, Value> kvs2 = workspace.get(Selector.ofString("/myyaks/example"));
+        Map<Path, Value> kvs2 = workspace.get(YSelector.ofString("/myyaks/example"), 0);
         if (kvs2 != null) {
             try {
                 for (Map.Entry<Path, Value> entry : kvs2.entrySet()) {
@@ -101,7 +101,7 @@ public class SocketClient {
         System.out.println("GET: [" + strValue + "]");
 
         System.out.println(">> Get Tuple 3");
-        Map<Path, Value> kvs3 = workspace.get(Selector.ofString("/myyaks/example/*"));
+        Map<Path, Value> kvs3 = workspace.get(YSelector.ofString("/myyaks/example/*"), 0);
         if (kvs3 != null) {
             try {
                 for (Map.Entry<Path, Value> entry : kvs3.entrySet()) {
@@ -119,7 +119,7 @@ public class SocketClient {
         System.out.println("REMOVE: [" + workspace.remove(Path.ofString("/myyaks/example/one"), quorum) + "]");
 
         System.out.println(">> Get Removed Tuple");
-        Map<Path, Value> kvs4 = workspace.get(Selector.ofString("/myyaks/example/one"));
+        Map<Path, Value> kvs4 = workspace.get(YSelector.ofString("/myyaks/example/one"), 0);
         if (kvs4 != null) {
             try {
                 for (Map.Entry<Path, Value> entry : kvs4.entrySet()) {
@@ -142,7 +142,7 @@ public class SocketClient {
         workspace.put(Path.ofString("/myyaks/example2/three"), new Value("hello3!", Encoding.STRING), quorum);
 
         System.out.println(">> Get Tuple");
-        Map<Path, Value> kvs5 = workspace.get(Selector.ofString("/myyaks/example/three"));
+        Map<Path, Value> kvs5 = workspace.get(YSelector.ofString("/myyaks/example/three"), 0);
         if (kvs5 != null) {
             try {
                 for (Map.Entry<Path, Value> entry : kvs5.entrySet()) {
@@ -157,13 +157,13 @@ public class SocketClient {
         System.out.println("GET: [" + strValue + "]");
 
         System.out.println(">> Create subscription without listener");
-        String sid2 = workspace.subscribe(Selector.ofString("/myyaks/example2/**"));
+        String sid2 = workspace.subscribe(YSelector.ofString("/myyaks/example2/**"), obs);
 
         System.out.println(">> Put Tuple");
         workspace.put(Path.ofString("/myyaks/example2/three"), new Value("hello3!", Encoding.STRING), quorum);
 
         System.out.println(">> Get Tuple");
-        System.out.println("GET: [" + workspace.get(Selector.ofString("/myyaks/example2/three")) + "]");
+        System.out.println("GET: [" + workspace.get(YSelector.ofString("/myyaks/example2/three"), 0) + "]");
 
         System.out.println(">> Unsubscribe");
         if (sid2 != null && !sid2.equals("")) {
@@ -171,11 +171,11 @@ public class SocketClient {
         }
 
         System.out.println(">> Register Eval");
-        workspace.register_eval(Path.ofString("/myyaks/key1"), evcb);
+        workspace.register_eval(Path.ofString("/myyaks/key1"), Path.ofString(""), evcb);
 
         System.out.println(">> Get on Eval");
-        String kvs6 = workspace.eval(Selector.ofString("/myyaks/key1?(param=1)"));
-        System.out.println("GET: [" + kvs6 + "]");
+        Map<Path, Value> kvs6 = workspace.eval(YSelector.ofString("/myyaks/key1?(param=1)"), 0);
+        // System.out.println("GET: [" + kvs6 + "]");
 
         System.out.println(">> Unregister Eval");
         workspace.unregister_eval(Path.ofString("/myyaks/key1"));

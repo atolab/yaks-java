@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import is.yaks.Encoding;
 import is.yaks.Listener;
 import is.yaks.Path;
-import is.yaks.Selector;
+import is.yaks.YSelector;
 import is.yaks.Value;
 import is.yaks.async.Admin;
 import is.yaks.async.Workspace;
@@ -41,7 +41,7 @@ public class BasicTest {
     public void init() {
         String[] args = { "http://localhost:7887" };
         yaks = Yaks.getInstance("is.yaks.socket.async.YaksImpl", BasicTest.class.getClassLoader(), args);
-        Assert.assertTrue(yaks instanceof YaksImpl);
+        Assert.assertTrue(yaks instanceof AsyncYaksImpl);
     }
 
     // @Test
@@ -52,7 +52,7 @@ public class BasicTest {
         options.setProperty("port", "7887");
         options.setProperty("cacheSize", "1024");
         try {
-            yaks = YaksImpl.getInstance();
+            yaks = AsyncYaksImpl.getInstance();
             yaks.login(options);
             Assert.assertNotNull(yaks);
 
@@ -72,7 +72,7 @@ public class BasicTest {
             Workspace workspace = workspaceFuture.get();
             Assert.assertNotNull(workspace);
 
-            CompletableFuture<String> subidFuture = workspace.subscribe(Selector.ofString("/is.yaks.tests/*"), obs);
+            CompletableFuture<String> subidFuture = workspace.subscribe(YSelector.ofString("/is.yaks.tests/*"), obs);
             String subid = subidFuture.get();
             Assert.assertNotNull(subid);
 
@@ -83,7 +83,7 @@ public class BasicTest {
             Assert.assertTrue(isOk);
 
             // get object Value from key
-            CompletableFuture<Map<Path, Value>> valuesFuture = workspace.get(Selector.ofString("/is.yaks.tests/a"),
+            CompletableFuture<Map<Path, Value>> valuesFuture = workspace.get(YSelector.ofString("/is.yaks.tests/a"),
                     quorum);
             Map<Path, Value> values = valuesFuture.get();
 

@@ -6,7 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import is.yaks.Listener;
 import is.yaks.Path;
 import is.yaks.Value;
-import is.yaks.Selector;
+import is.yaks.YSelector;
 
 public interface Workspace {
 
@@ -61,7 +61,7 @@ public interface Workspace {
      * dropped. - Keep: values that cannot be transcoded are kept with their original encoding and left for the
      * application to deal with.
      */
-    public CompletableFuture<Map<Path, Value>> get(Selector selector, int quorum);
+    public CompletableFuture<Map<Path, Value>> get(YSelector selector, int quorum);
 
     /**
      * Removes from all Yaks's storages the tuples having the given **path**. The **path** can be absolute or relative
@@ -80,7 +80,7 @@ public interface Workspace {
      * 
      * @return sid subscriber_id
      */
-    public CompletableFuture<String> subscribe(Selector selector, Listener obs);
+    public CompletableFuture<String> subscribe(YSelector selector, Listener obs);
 
     /**
      * Subscribe without listener
@@ -88,7 +88,7 @@ public interface Workspace {
      * @param subib
      * @return
      */
-    public CompletableFuture<String> subscribe(Selector selector);
+    public CompletableFuture<String> subscribe(YSelector selector);
 
     /**
      * Unregisters a previous subscription with the identifier **subid**
@@ -118,7 +118,7 @@ public interface Workspace {
      * returned with their original encoding. The **fallback** indicates the action that YAKS will perform if the
      * transcoding of a value fails.
      */
-    public CompletableFuture<String> eval(Selector selector);
+    public CompletableFuture<String> eval(YSelector selector);
 
     public int getWsid();
 

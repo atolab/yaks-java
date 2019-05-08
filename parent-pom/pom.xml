@@ -9,7 +9,7 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
-	<name>Yaks</name>
+	<name>Yaks parent-pom</name>
 	<description>This is a parent POM with recommended dependencies for Yaks API</description>
 
 	<organization>

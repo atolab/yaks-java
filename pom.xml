@@ -17,7 +17,7 @@
 	</parent>
 
 	<name>Yaks</name>
-	<description>This is a parent POM with recommended dependencies for Java Yaks API</description>
+	<description>This is a POM with recommended dependencies for Java Yaks API</description>
 
 	<profiles>
 		<profile>

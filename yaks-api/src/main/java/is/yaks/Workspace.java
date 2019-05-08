@@ -31,7 +31,7 @@ public interface Workspace {
     /**
      * Allows to **put** a delta, thus avoiding to distribute the entire value.
      */
-    public void update();
+    public boolean update(Path p, Value v, int quorum);
 
     /**
      * gets the set of tuples *<path,value>* available in YAKS for which the path matches the selector, where the
@@ -59,7 +59,7 @@ public interface Workspace {
      * dropped. - Keep: values that cannot be transcoded are kept with their original encoding and left for the
      * application to deal with.
      */
-    public Map<Path, Value> get(Selector selector);
+    public Map<Path, Value> get(YSelector selector, int quorum);
 
     /**
      * Removes from all Yaks's storages the tuples having the given **path**. The **path** can be absolute or relative
@@ -78,15 +78,7 @@ public interface Workspace {
      * 
      * @return sid subscriber_id
      */
-    public String subscribe(Selector selector, Listener obs);
-
-    /**
-     * Subscribe without listener
-     * 
-     * @param subib
-     * @return
-     */
-    public String subscribe(Selector selector);
+    public String subscribe(YSelector selector, Listener obs);
 
     /**
      * Unregisters a previous subscription with the identifier **subid**
@@ -97,7 +89,7 @@ public interface Workspace {
      * Registers an evaluation function **eval** under the provided **path**. The **path** can be absolute or relative
      * to the workspace.
      */
-    public void register_eval(Path path, Listener evcb);
+    public void register_eval(Path path, Path workpath, Listener evcb);
 
     /**
      * Unregisters an previously registered evaluation function under the give [path]. The [path] can be absolute or
@@ -116,7 +108,7 @@ public interface Workspace {
      * returned with their original encoding. The **fallback** indicates the action that YAKS will perform if the
      * transcoding of a value fails.
      */
-    public String eval(Selector selector);
+    public Map<Path, Value> eval(YSelector selector, int multiplicity);
 
     public int getWsid();
 
