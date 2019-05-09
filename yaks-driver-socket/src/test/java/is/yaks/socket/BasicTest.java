@@ -30,13 +30,9 @@ public class BasicTest {
     private Listener obs; // TODO
 
     public static final Logger LOG = LoggerFactory.getLogger(BasicTest.class);
-    private GsonTypeToken gsonTypes = GsonTypeToken.getInstance();
 
     @Before
     public void init() {
-        // String[] args = { "http://localhost:7887" };
-        // yaks = Yaks.getInstance("is.yaks.socket.YaksImpl", BasicTest.class.getClassLoader(), args);
-        // Assert.assertTrue(yaks instanceof YaksImpl);
 
         Properties options = new Properties();
         options.setProperty("host", "localhost");

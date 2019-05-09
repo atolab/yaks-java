@@ -1,15 +1,11 @@
 package is.yaks.socket;
 
-import java.nio.channels.SocketChannel;
-import java.util.HashMap;
 import java.util.Properties;
 
 import is.yaks.Admin;
 import is.yaks.Path;
 import is.yaks.Workspace;
 import is.yaks.Yaks;
-import is.yaks.socket.types.Message;
-import is.yaks.socket.utils.ByteBufferPoolImpl;
 
 public class YaksImpl implements Yaks {
 
@@ -22,7 +18,7 @@ public class YaksImpl implements Yaks {
     public static final long TIMEOUT = 1l;
 
     public YaksImpl() {
-
+        yaks_rt = YaksRuntimeImpl.getInstance();
     }
 
     public static synchronized Yaks getInstance() {
@@ -30,35 +26,15 @@ public class YaksImpl implements Yaks {
         if (yaks == null) {
             yaks = new YaksImpl();
         }
-
-        // Thread thr1 = new Thread(yaks_rt, "Init client yaks_runtime ... ");
-        // thr1.start();
-
         return yaks;
     }
 
-    // private YaksImpl(String... args) {
-    // if (args.length == 0) {
-    // // logger.error("Usage: <yaksUrl>");
-    // System.exit(-1);
-    // }
-    // String yaksUrl = args[0];
-    // if (yaksUrl.isEmpty()) {
-    // System.exit(-1);
-    // }
-    //
-    // config.setYaksUrl(yaksUrl);
-    // }
-
-    // public SocketChannel getChannel() {
-    // return socket;
-    // }
-
     @Override
     public Yaks login(Properties properties) {
+
         yaks = yaks_rt.create(properties);
 
-        yaks_rt.process_login(properties, yaks);
+        yaks_rt.process_login(properties);
 
         return yaks;
     }

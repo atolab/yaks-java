@@ -18,7 +18,7 @@ public interface YaksRuntime {
 
     public void destroy(Yaks yaks);
 
-    public void process_login(Properties properties, Yaks yaks);
+    public void process_login(Properties properties);
 
     public void process_logout(Yaks yaks);
 

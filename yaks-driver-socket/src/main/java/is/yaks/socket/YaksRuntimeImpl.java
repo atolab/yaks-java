@@ -52,7 +52,8 @@ public class YaksRuntimeImpl implements YaksRuntime, Runnable {
     private YaksImpl yaks; // yaks-api.ml
     private static YaksRuntimeImpl yaks_rt; // yaks-socket-driver.ml
 
-    private YaksRuntimeImpl() {
+    public YaksRuntimeImpl() {
+
     }
 
     public static synchronized YaksRuntimeImpl getInstance() {
@@ -67,7 +68,7 @@ public class YaksRuntimeImpl implements YaksRuntime, Runnable {
         YaksImpl yaks = new YaksImpl();
         int port;
         String host = (String) properties.get("host");
-        int p = (int) properties.get("port");
+        int p = Integer.parseInt((String) properties.get("port"));
         if (p == 0) {
             port = Yaks.DEFAUL_PORT;
         } else {
@@ -227,8 +228,6 @@ public class YaksRuntimeImpl implements YaksRuntime, Runnable {
 
             int vle = 0;
 
-            // SocketChannel socket = yaks.getChannel();
-            // while (vle == 0){
             while (true) {
 
                 vle = VLEEncoder.read_vle(socket);
@@ -239,7 +238,7 @@ public class YaksRuntimeImpl implements YaksRuntime, Runnable {
                     socket.read(buffer);
                     Message msg = read(buffer);
                     if (workingMap.containsKey(msg.getCorrelationID())) {
-                        workingMap.remove(msg).getCorrelationID();
+                        workingMap.remove(msg.getCorrelationID());
                         switch (msg.getMessageCode()) {
                         case NOTIFY:
                             System.out.println("Received NOTIFY message");
@@ -279,75 +278,37 @@ public class YaksRuntimeImpl implements YaksRuntime, Runnable {
     }
 
     @Override
-    public void destroy(is.yaks.Yaks yaks) {
-        // TODO Auto-generated method stub
+    public void destroy(Yaks yaks) {
 
     }
 
     @Override
-    public void process_login(Properties properties, is.yaks.Yaks yaks) {
-        int vle = 0;
-        boolean is_login_ok = false;
+    public void process_login(Properties properties) {
 
         Message loginM = new MessageFactory().getMessage(MessageCode.LOGIN, properties);
-        // write msg
+
         yaks_rt.write(socket, loginM);
-        // ==>
-        while (vle == 0) {
-            vle = VLEEncoder.read_vle(socket);
-        }
-        if (vle > 0) {
-            // read response msg
-            ByteBuffer buffer = ByteBuffer.allocate(vle);
-            Message msgReply = yaks_rt.read(buffer);
-            if (msgReply.getCorrelationID() == loginM.getCorrelationID()) {
-                if (msgReply.getMessageCode().equals(MessageCode.OK)) {
-                    is_login_ok = true;
-                }
-            }
-        }
+        workingMap.put(loginM.getCorrelationID(), loginM);
+
+        Thread thr1 = new Thread(yaks_rt, "Init receivers_loop in yaks_runtime ... ");
+        thr1.start();
     }
 
     @Override
     public Workspace process_workspace(Path path, Yaks yaks) {
+
         WorkspaceImpl ws = new WorkspaceImpl();
-        int vle = 0;
-        try {
-            if (path != null) {
-                int wsid = 0;
 
-                Message workspaceM = new MessageFactory().getMessage(MessageCode.WORKSPACE, null);
-                workspaceM.setPath(path);
-                if (socket.isConnected()) {
-                    // post msg
-                    yaks_rt.write(socket, workspaceM);
-                    // ==>
-                    while (vle == 0) {
-                        vle = VLEEncoder.read_vle(socket);
-                    }
-                    if (vle > 0) {
-                        // read response msg
-                        ByteBuffer buffer = ByteBuffer.allocate(vle);
-                        socket.read(buffer);
-                        Message msgReply = yaks_rt.read(buffer);
+        if (path != null) {
+            int wsid = 0;
 
-                        // check_if_corr_id is the same
-                        if (msgReply.getCorrelationID() == workspaceM.getCorrelationID()) {
-                            if (((Message) msgReply).getMessageCode().equals(MessageCode.OK)) {
-                                // find_property wsid
-                                Map<String, String> list = ((Message) msgReply).getPropertiesList();
-                                if (!list.isEmpty()) {
-                                    wsid = Integer.parseInt(list.get("wsid"));
-                                }
-                                ws.setWsid(wsid);
-                                ws.setPath(path);
-                            }
-                        }
-                    }
-                }
+            Message workspaceM = new MessageFactory().getMessage(MessageCode.WORKSPACE, null);
+            workspaceM.setPath(path);
+            if (socket.isConnected()) {
+                // post msg
+                yaks_rt.write(socket, workspaceM);
+
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
         return ws;
     }
@@ -356,34 +317,14 @@ public class YaksRuntimeImpl implements YaksRuntime, Runnable {
     public Map<Path, Value> process_get(Properties properties, YSelector selector, Yaks yaks, int quorum) {
         int vle = 0;
         Map<Path, Value> kvs = null;
-        try {
-            Message getM = new MessageFactory().getMessage(MessageCode.GET, null);
-            getM.add_property(Message.WSID, String.valueOf(wsid));
-            getM.add_selector(selector);
-            if (yaks != null) {
-                yaks_rt.write(socket, getM);
-                // ==>
-                while (vle == 0) {
-                    vle = VLEEncoder.read_vle(socket);
+        Message getM = new MessageFactory().getMessage(MessageCode.GET, null);
+        getM.add_property(Message.WSID, String.valueOf(wsid));
+        getM.add_selector(selector);
+        if (yaks != null) {
+            yaks_rt.write(socket, getM);
 
-                }
-                if (vle > 0) {
-                    // read response msg
-                    ByteBuffer buffer = ByteBuffer.allocate(vle);
-                    socket.read(buffer);
-                    Message msgReply = yaks_rt.read(buffer);
-                    // if(msgReply.getCorrelationID() == getM.getCorrelationID()) {
-                    if (msgReply != null && msgReply.getMessageCode().equals(MessageCode.VALUES)) {
-                        if (!msgReply.getValuesList().isEmpty()) {
-                            kvs = msgReply.getValuesList();
-                        }
-                    }
-                    // }
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
+
         return kvs;
     }
 
@@ -392,34 +333,16 @@ public class YaksRuntimeImpl implements YaksRuntime, Runnable {
         int vle = 0;
         boolean is_put_ok = false;
 
-        try {
-            Message putM = new MessageFactory().getMessage(MessageCode.PUT, null);
-            putM.add_property(Message.WSID, String.valueOf(wsid));
-            putM.add_workspace(path, val);
-            if (socket != null) {
-                yaks_rt.write(socket, putM);
-                // ==>
-                while (vle == 0) {
-                    vle = VLEEncoder.read_vle(socket);
-                }
-                if (vle > 0) {
-                    // read response msg
-                    ByteBuffer buffer = ByteBuffer.allocate(vle);
-                    socket.read(buffer);
-                    Message msgReply = yaks_rt.read(buffer);
-                    // if (msgReply.getCorrelationID() == putM.getCorrelationID()) {
-                    if ((msgReply) != null && msgReply.getMessageCode().equals(MessageCode.OK)) {
-                        is_put_ok = true;
-                    }
-                    // }
-                }
-            } else {
-                System.out.println("ERROR: socket is null!");
-            }
+        Message putM = new MessageFactory().getMessage(MessageCode.PUT, null);
+        putM.add_property(Message.WSID, String.valueOf(wsid));
+        putM.add_workspace(path, val);
+        if (socket != null && socket.isConnected()) {
+            yaks_rt.write(socket, putM);
 
-        } catch (IOException e) {
-            e.printStackTrace();
+        } else {
+            System.out.println("ERROR: socket is null!");
         }
+
         return is_put_ok;
     }
 
@@ -428,34 +351,16 @@ public class YaksRuntimeImpl implements YaksRuntime, Runnable {
         int vle = 0;
         boolean is_update_ok = false;
 
-        try {
-            Message updateM = new MessageFactory().getMessage(MessageCode.UPDATE, null);
-            updateM.add_property(Message.WSID, String.valueOf(wsid));
-            updateM.add_workspace(p, v);
-            if (socket != null) {
-                yaks_rt.write(socket, updateM);
-                // ==>
-                while (vle == 0) {
-                    vle = VLEEncoder.read_vle(socket);
-                }
-                if (vle > 0) {
-                    // read response msg
-                    ByteBuffer buffer = ByteBuffer.allocate(vle);
-                    socket.read(buffer);
-                    Message msgReply = yaks_rt.read(buffer);
-                    // if (msgReply.getCorrelationID() == putM.getCorrelationID()) {
-                    if ((msgReply) != null && msgReply.getMessageCode().equals(MessageCode.OK)) {
-                        is_update_ok = true;
-                    }
-                    // }
-                }
-            } else {
-                System.out.println("ERROR: socket is null!");
-            }
+        Message updateM = new MessageFactory().getMessage(MessageCode.UPDATE, null);
+        updateM.add_property(Message.WSID, String.valueOf(wsid));
+        updateM.add_workspace(p, v);
+        if (socket != null && socket.isConnected()) {
+            yaks_rt.write(socket, updateM);
 
-        } catch (IOException e) {
-            e.printStackTrace();
+        } else {
+            System.out.println("ERROR: socket is null!");
         }
+
         return is_update_ok;
 
     }
@@ -464,34 +369,14 @@ public class YaksRuntimeImpl implements YaksRuntime, Runnable {
     public boolean process_remove(Properties properties, Path path, Yaks yaks, int quorum) {
         int vle = 0;
         boolean is_remove_ok = false;
-        try {
-            Message deleteM = new MessageFactory().getMessage(MessageCode.DELETE, null);
-            deleteM.add_property(Message.WSID, String.valueOf(wsid));
-            deleteM.setPath(path);
-            if (socket != null) {
-                yaks_rt.write(socket, deleteM);
+        Message deleteM = new MessageFactory().getMessage(MessageCode.DELETE, null);
+        deleteM.add_property(Message.WSID, String.valueOf(wsid));
+        deleteM.setPath(path);
+        if (socket != null && socket.isConnected()) {
+            yaks_rt.write(socket, deleteM);
 
-                // ==>
-                while (vle == 0) {
-                    vle = VLEEncoder.read_vle(socket);
-
-                }
-                if (vle > 0) {
-                    // read response msg
-                    ByteBuffer buffer = ByteBuffer.allocate(vle);
-                    socket.read(buffer);
-                    Message msgReply = yaks_rt.read(buffer);
-
-                    if (msgReply.getCorrelationID() == deleteM.getCorrelationID()) {
-                        if (msgReply.getMessageCode().equals(MessageCode.OK)) {
-                            is_remove_ok = true;
-                        }
-                    }
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
+
         return is_remove_ok;
     }
 
@@ -499,31 +384,12 @@ public class YaksRuntimeImpl implements YaksRuntime, Runnable {
     public String process_subscribe(Properties properties, YSelector selector, Yaks yaks, Listener listener) {
         int vle = 0;
         String subid = "";
-        try {
-            Message subscribeM = new MessageFactory().getMessage(MessageCode.SUB, null);
-            subscribeM.add_property(Message.WSID, String.valueOf(wsid));
-            subscribeM.setPath(Path.ofString(selector.toString()));
-            if (socket != null) {
-                yaks_rt.write(socket, subscribeM);
-                // ==>
-                while (vle == 0) {
-                    vle = VLEEncoder.read_vle(socket);
+        Message subscribeM = new MessageFactory().getMessage(MessageCode.SUB, null);
+        subscribeM.add_property(Message.WSID, String.valueOf(wsid));
+        subscribeM.setPath(Path.ofString(selector.toString()));
+        if (socket != null && socket.isConnected()) {
+            yaks_rt.write(socket, subscribeM);
 
-                }
-                if (vle > 0) {
-                    // read response msg
-                    ByteBuffer buffer = ByteBuffer.allocate(vle);
-                    socket.read(buffer);
-                    Message msgReply = yaks_rt.read(buffer);
-                    if (msgReply.getCorrelationID() == subscribeM.getCorrelationID()) {
-                        if (msgReply.getMessageCode().equals(MessageCode.OK)) {
-                            subid = (String) msgReply.getPropertiesList().get(Message.SUBID);
-                        }
-                    }
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
         return subid;
     }
@@ -532,32 +398,14 @@ public class YaksRuntimeImpl implements YaksRuntime, Runnable {
     public boolean process_unsubscribe(String subid, Yaks yaks) {
         int vle = 0;
         boolean is_unsub_ok = false;
-        try {
-            Message unsubM = new MessageFactory().getMessage(MessageCode.UNSUB, null);
-            unsubM.add_property(Message.WSID, String.valueOf(wsid));
-            unsubM.setPath(Path.ofString(subid.toString()));
-            if (socket != null) {
-                yaks_rt.write(socket, unsubM);
-                // ==>
-                while (vle == 0) {
-                    vle = VLEEncoder.read_vle(socket);
+        Message unsubM = new MessageFactory().getMessage(MessageCode.UNSUB, null);
+        unsubM.add_property(Message.WSID, String.valueOf(wsid));
+        unsubM.setPath(Path.ofString(subid.toString()));
+        if (socket != null && socket.isConnected()) {
+            yaks_rt.write(socket, unsubM);
 
-                }
-                if (vle > 0) {
-                    // read response msg
-                    ByteBuffer buffer = ByteBuffer.allocate(vle);
-                    socket.read(buffer);
-                    Message msgReply = yaks_rt.read(buffer);
-                    if (msgReply.getCorrelationID() == unsubM.getCorrelationID()) {
-                        if (msgReply.getMessageCode().equals(MessageCode.OK)) {
-                            is_unsub_ok = true;
-                        }
-                    }
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
+
         return is_unsub_ok;
     }
 
@@ -565,103 +413,37 @@ public class YaksRuntimeImpl implements YaksRuntime, Runnable {
     public void process_register_eval(Properties properties, Path path, Yaks yaks, Path workpath) {
         int vle = 0;
         boolean is_reg_eval_ok = false;
-        try {
 
-            Message regEvalM = new MessageFactory().getMessage(MessageCode.REG_EVAL, null);
-            regEvalM.add_property(Message.WSID, String.valueOf(wsid));
-            regEvalM.setPath(Path.ofString(path.toString()));
-            if (socket != null) {
-                yaks_rt.write(socket, regEvalM);
-                // ==>
-                while (vle == 0) {
-                    vle = VLEEncoder.read_vle(socket);
+        Message regEvalM = new MessageFactory().getMessage(MessageCode.REG_EVAL, null);
+        regEvalM.add_property(Message.WSID, String.valueOf(wsid));
+        regEvalM.setPath(Path.ofString(path.toString()));
+        if (socket != null && socket.isConnected()) {
+            yaks_rt.write(socket, regEvalM);
 
-                }
-                if (vle > 0) {
-                    // read response msg
-                    ByteBuffer buffer = ByteBuffer.allocate(vle);
-                    socket.read(buffer);
-                    Message msgReply = yaks_rt.read(buffer);
-                    if (msgReply.getCorrelationID() == regEvalM.getCorrelationID()) {
-                        if (msgReply.getMessageCode().equals(MessageCode.OK)) {
-                            is_reg_eval_ok = true;
-                        }
-                    }
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
+
     }
 
     @Override
     public void process_unregister_eval(Properties properties, Path path, Yaks yaks, Path workpath) {
-        int vle = 0;
-        boolean is_unreg_eval_ok = false;
-        try {
-            Message unreg_evalM = new MessageFactory().getMessage(MessageCode.UNREG_EVAL, null);
-            unreg_evalM.add_property(Message.WSID, String.valueOf(wsid));
-            unreg_evalM.setPath(Path.ofString(path.toString()));
-            if (socket != null) {
-                yaks_rt.write(socket, unreg_evalM);
-                // ==>
-                while (vle == 0) {
-                    vle = VLEEncoder.read_vle(socket);
+        Message unreg_evalM = new MessageFactory().getMessage(MessageCode.UNREG_EVAL, null);
+        unreg_evalM.add_property(Message.WSID, String.valueOf(wsid));
+        unreg_evalM.setPath(Path.ofString(path.toString()));
+        if (socket != null && socket.isConnected()) {
+            yaks_rt.write(socket, unreg_evalM);
 
-                }
-                if (vle > 0) {
-                    // read response msg
-                    ByteBuffer buffer = ByteBuffer.allocate(vle);
-                    socket.read(buffer);
-                    Message msgReply = yaks_rt.read(buffer);
-                    if (msgReply.getCorrelationID() == unreg_evalM.getCorrelationID()) {
-                        if (msgReply.getMessageCode().equals(MessageCode.OK)) {
-                            is_unreg_eval_ok = true;
-                        }
-                    }
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
     @Override
     public Map<Path, Value> process_eval(Properties properties, YSelector selector, Yaks yaks, int multiplicity) {
-        int vle = 0;
-        Message msgReply = null;
-        String values = "";
-        try {
-            Message evalM = new MessageFactory().getMessage(MessageCode.EVAL, null);
-            evalM.add_property(Message.WSID, String.valueOf(wsid));
-            evalM.setSelector(selector);
-            if (socket != null) {
-                yaks_rt.write(socket, evalM);
-                // ==>
-                while (vle == 0) {
-                    vle = VLEEncoder.read_vle(socket);
+        Message msgReply = new MessageImpl();
 
-                }
-                if (vle > 0) {
-                    // read response msg
-                    ByteBuffer buffer = ByteBuffer.allocate(vle);
-                    socket.read(buffer);
-                    msgReply = yaks_rt.read(buffer);
-                    if (msgReply.getCorrelationID() == evalM.getCorrelationID()) {
-                        if (msgReply != null && msgReply.getMessageCode().equals(MessageCode.VALUES)) {
-                            if (!msgReply.getValuesList().isEmpty()) {
-
-                                for (Map.Entry<Path, Value> pair : msgReply.getValuesList().entrySet()) {
-                                    values += "(" + pair.getKey().toString() + ", "
-                                            + pair.getValue().getValue().toString() + ")";
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        Message evalM = new MessageFactory().getMessage(MessageCode.EVAL, null);
+        evalM.add_property(Message.WSID, String.valueOf(wsid));
+        evalM.setSelector(selector);
+        if (socket != null && socket.isConnected()) {
+            yaks_rt.write(socket, evalM);
         }
         return msgReply.getValuesList();
     }

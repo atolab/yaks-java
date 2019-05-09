@@ -19,8 +19,8 @@ public class SocketClient {
     private static Workspace workspace;
     private static Admin admin;
 
-    private static Listener obs; // TODO
-    private static Listener evcb; // TODO
+    private static Listener obs;
+    private static Listener evcb;
 
     @SuppressWarnings("static-access")
     public static void main(String[] args) throws IOException, InterruptedException {
