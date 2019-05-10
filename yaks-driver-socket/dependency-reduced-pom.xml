@@ -7,7 +7,7 @@
     <relativePath>../parent-pom/pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>yaks-driver-websocket</artifactId>
+  <artifactId>yaks-driver-socket</artifactId>
   <name>Yaks API implementation in Java</name>
   <build>
     <plugins>

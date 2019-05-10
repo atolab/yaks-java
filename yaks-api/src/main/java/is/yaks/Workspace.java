@@ -89,7 +89,7 @@ public interface Workspace {
      * Registers an evaluation function **eval** under the provided **path**. The **path** can be absolute or relative
      * to the workspace.
      */
-    public void register_eval(Path path, Path workpath, Listener evcb);
+    public void register_eval(Path path, Listener eval_obs);
 
     /**
      * Unregisters an previously registered evaluation function under the give [path]. The [path] can be absolute or

@@ -1,51 +1,44 @@
 package is.yaks.socket.async;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
 
 import is.yaks.Listener;
 import is.yaks.Path;
 import is.yaks.Value;
 import is.yaks.YSelector;
-import is.yaks.async.Workspace;
-import is.yaks.async.Yaks;
-import is.yaks.socket.types.Message;
+import is.yaks.async.AsyncWorkspace;
+import is.yaks.async.AsyncYaks;
 
 public interface AsyncYaksRuntime {
 
-    public CompletableFuture<Yaks> create(Properties properties);
+    public AsyncYaks create(Properties properties);
 
-    public CompletableFuture<Void> destroy(Yaks yaks);
+    public void destroy(AsyncYaks yaks);
 
-    public CompletableFuture<Void> process_login(Properties properties, Yaks yaks);
+    public void process_login(Properties properties);
 
-    public CompletableFuture<Void> process_logout(Yaks yaks);
+    public void process_logout(AsyncYaks yaks);
 
-    public CompletableFuture<Workspace> process_workspace(Path path, Yaks yaks);
+    public AsyncWorkspace process_workspace(Path path);
 
-    public CompletableFuture<Map<Path, Value>> process_get(Properties properties, YSelector yselector, Yaks yaks,
-            int quorum);
+    public Map<Path, Value> process_get(YSelector yselector, int quorum);
 
-    public CompletableFuture<Boolean> process_put(Properties properties, Path path, Value val, Yaks yaks, int quorum);
+    public boolean process_put(Path path, Value val, int quorum);
 
-    public CompletableFuture<Boolean> process_update(Properties properties, Path path, Value val, Yaks yaks,
-            int quorum);
+    public boolean process_update(Path path, Value val, int quorum);
 
-    public CompletableFuture<Boolean> process_remove(Properties properties, Yaks yaks, int quorum);
+    public boolean process_remove(Path path, int quorum);
 
-    public CompletableFuture<String> process_subscribe(Properties properties, YSelector yselector, Yaks yaks,
-            Listener listener);
+    public String process_subscribe(YSelector yselector, Listener obs);
 
-    public CompletableFuture<Boolean> process_unsubscribe(String subid, Yaks yaks);
+    public boolean process_unsubscribe(String subid);
 
-    public CompletableFuture<Void> process_register_eval(Properties properties, Path path, Yaks yaks, Path workpath);
+    public boolean process_register_eval(Path path, Listener eval_obs);
 
-    public CompletableFuture<Void> process_unregister_eval(Properties properties, Path path, Yaks yaks, Path workpath);
+    public boolean process_unregister_eval(Path path);
 
-    public CompletableFuture<Map<Path, Value>> process_eval(Properties properties, YSelector yselector, Yaks yaks,
-            int multiplicity);
+    public Map<Path, Value> process_eval(YSelector yselector, int multiplicity);
 
-    public CompletableFuture<Void> process();
+    public void process();
 }

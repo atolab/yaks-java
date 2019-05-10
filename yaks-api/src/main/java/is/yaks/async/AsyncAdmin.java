@@ -14,64 +14,64 @@ import is.yaks.Value;
  * ADLINK Technology Inc. - Yaks API refactoring
  *
  */
-public interface Admin {
+public interface AsyncAdmin {
 
     public static String PREFIX = "@";
     public static String MY_YAKS = "local";
 
-    public static Yaks yaks = null;
+    public static AsyncYaks yaks = null;
     public static Path path = null;
     public static Value value = null;
-    public static Workspace ws = null;
+    public static AsyncWorkspace ws = null;
     public static Properties properties = null;
 
     /**
      * Not supported in this version.
      * 
      */
-    public CompletableFuture<Boolean> add_frontend(int feid, Properties properties, Yaks yaks);
+    public boolean add_frontend(int feid, Properties properties, AsyncYaks yaks);
 
     /**
      * Returns the frontend with the front-end ID **feid** on the Yaks instance with UUID **yaks**.
      * 
      */
-    public CompletableFuture<Value> get_frontend(Yaks yaks);
+    public Value get_frontend(AsyncYaks yaks);
 
     /**
      * Returns the list of frontends available on the Yaks instance with UUID **yaks**.
      * 
      */
-    public CompletableFuture<List<Value>> get_frontends(Yaks yaks);
+    public List<Value> get_frontends(AsyncYaks yaks);
 
     /**
      * Not supported in this version.
      * 
      */
-    public CompletableFuture<Boolean> remove_frontend(String feid, Yaks yaks);
+    public boolean remove_frontend(String feid, AsyncYaks yaks);
 
     /**
      * Not supported in this version.
      * 
      */
-    public CompletableFuture<Boolean> add_backend(String beid, Properties properties, Yaks yaks);
+    public boolean add_backend(String beid, Properties properties, AsyncYaks yaks);
 
     /**
      * Gets the back-end with id **beid** on the Yaks instance with UUID **yaks**.
      * 
      */
-    public CompletableFuture<Value> get_backend(Yaks yaks);
+    public Value get_backend(AsyncYaks yaks);
 
     /**
      * Gets the list of all available back-ends on the Yaks instance with UUID **yaks**.
      * 
      */
-    public CompletableFuture<List<Value>> get_backends(String beid, Yaks yaks);
+    public List<Value> get_backends(String beid, AsyncYaks yaks);
 
     /**
      * Not supported in this version.
      * 
      */
-    public CompletableFuture<Void> remove_backend(String beid, Yaks yaks);
+    public void remove_backend(String beid, AsyncYaks yaks);
 
     /**
      * Adds a storage named **stid** on the backend **beid** and with storage and back-end specific configuration
@@ -82,42 +82,42 @@ public interface Admin {
      * 
      * @return is_reply_ok
      */
-    public CompletableFuture<Boolean> add_storage(String stid, Properties properties, String beid, Yaks yaks);
+    public boolean add_storage(Properties properties, String stid, String beid);
 
     /**
      * Gets the storage with id **stid** on the Yaks instance with UUID **yaks**.
      * 
      */
-    public Value get_storage(String stid, Yaks yaks);
+    public Value get_storage(String stid, AsyncYaks async_yaks);
 
     /**
      * Gets the list of all available storages on the Yaks instance with UUID **yaks**.
      * 
      */
-    public CompletableFuture<List<Value>> get_storages(String beid, Yaks yaks);
+    public List<Value> get_storages(String beid, AsyncYaks async_yaks);
 
     /**
      * Removes the storage with id **stid** on the Yaks instance with UUID **yaks**.
      * 
      */
-    public CompletableFuture<Boolean> remove_storage(String stid, Yaks yaks);
+    public boolean remove_storage(String stid, AsyncYaks async_yaks);
 
     /**
      * Gets the list of all available sessions on the Yaks instance with UUID **yaks**
      * 
      */
-    public CompletableFuture<List<Value>> get_sessions(String feid, Yaks yaks);
+    public List<Value> get_sessions(String feid, AsyncYaks yaks);
 
     /**
      * Not supported in this version.
      * 
      */
-    public CompletableFuture<Boolean> close_session(String sid, Yaks yaks);
+    public boolean close_session(String sid, AsyncYaks yaks);
 
     /**
      * Gets the list of all active subscriptions on the Yaks instance with UUID **yaks**
      * 
      */
-    public CompletableFuture<List<Value>> get_subscriptions(String sid, Yaks yaks);
+    public List<Value> get_subscriptions(String sid, AsyncYaks yaks);
 
 }

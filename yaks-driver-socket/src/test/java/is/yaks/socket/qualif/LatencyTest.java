@@ -6,19 +6,19 @@ import java.util.concurrent.ExecutionException;
 
 import is.yaks.Path;
 import is.yaks.Value;
-import is.yaks.Workspace;
-import is.yaks.Yaks;
-import is.yaks.socket.YaksImpl;
+import is.yaks.async.AsyncWorkspace;
+import is.yaks.async.AsyncYaks;
+import is.yaks.socket.async.AsyncYaksImpl;
 
 public class LatencyTest {
 
     public static int DEFAUL_PORT = 7887;
 
-    private static Yaks yaks;
-    private static Workspace ws;
+    private static AsyncYaks yaks;
+    private static AsyncWorkspace ws;
 
     public void init(Properties properties) throws InterruptedException, ExecutionException {
-        yaks = YaksImpl.getInstance();
+        yaks = AsyncYaksImpl.getInstance();
         if (yaks != null) {
             // login to yaks api
             yaks = yaks.login(properties);
@@ -27,7 +27,7 @@ public class LatencyTest {
         }
     }
 
-    public void put_n(int n, Workspace ws, Path path, Value val) {
+    public void put_n(int n, AsyncWorkspace ws, Path path, Value val) {
         if (n > 1) {
             ws.put(path, val, 0);
             put_n(n - 1, ws, path, val);

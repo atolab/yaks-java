@@ -1,6 +1,7 @@
 package is.yaks.async;
 
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 
 import is.yaks.Listener;
@@ -8,7 +9,7 @@ import is.yaks.Path;
 import is.yaks.Value;
 import is.yaks.YSelector;
 
-public interface Workspace {
+public interface AsyncWorkspace {
 
     /**
      * The put operation:
@@ -28,12 +29,12 @@ public interface Workspace {
      * subscriber, if any exist.
      */
 
-    public CompletableFuture<Boolean> put(Path p, Value v, int quorum);
+    public boolean put(Path p, Value v, int quorum);
 
     /**
      * Allows to **put** a delta, thus avoiding to distribute the entire value.
      */
-    public CompletableFuture<Void> update();
+    public boolean update(Path p, Value v, int quorum);
 
     /**
      * gets the set of tuples *<path,value>* available in YAKS for which the path matches the selector, where the
@@ -61,7 +62,7 @@ public interface Workspace {
      * dropped. - Keep: values that cannot be transcoded are kept with their original encoding and left for the
      * application to deal with.
      */
-    public CompletableFuture<Map<Path, Value>> get(YSelector selector, int quorum);
+    public Map<Path, Value> get(YSelector selector, int quorum);
 
     /**
      * Removes from all Yaks's storages the tuples having the given **path**. The **path** can be absolute or relative
@@ -69,7 +70,7 @@ public interface Workspace {
      * removed the tuple from **quorum** storages.
      * 
      */
-    public CompletableFuture<Boolean> remove(Path path, int quorum);
+    public boolean remove(Path path, int quorum);
 
     /**
      * Registers a subscription to tuples whose path matches the **selector**.
@@ -80,32 +81,24 @@ public interface Workspace {
      * 
      * @return sid subscriber_id
      */
-    public CompletableFuture<String> subscribe(YSelector selector, Listener obs);
-
-    /**
-     * Subscribe without listener
-     * 
-     * @param subib
-     * @return
-     */
-    public CompletableFuture<String> subscribe(YSelector selector);
+    public String subscribe(YSelector selector, Listener obs);
 
     /**
      * Unregisters a previous subscription with the identifier **subid**
      */
-    public CompletableFuture<Boolean> unsubscribe(String subid);
+    public boolean unsubscribe(String subid);
 
     /**
      * Registers an evaluation function **eval** under the provided **path**. The **path** can be absolute or relative
      * to the workspace.
      */
-    public CompletableFuture<Boolean> register_eval(Path path, Listener evcb);
+    public boolean register_eval(Path path, Listener evcb);
 
     /**
      * Unregisters an previously registered evaluation function under the give [path]. The [path] can be absolute or
      * relative to the workspace.
      */
-    public CompletableFuture<Boolean> unregister_eval(Path path);
+    public boolean unregister_eval(Path path);
 
     /**
      * Requests the evaluation of registered evals whose registration **path** matches the given **selector**.
@@ -118,7 +111,7 @@ public interface Workspace {
      * returned with their original encoding. The **fallback** indicates the action that YAKS will perform if the
      * transcoding of a value fails.
      */
-    public CompletableFuture<String> eval(YSelector selector);
+    public Map<Path, Value> eval(YSelector selector, int multiplicity);
 
     public int getWsid();
 

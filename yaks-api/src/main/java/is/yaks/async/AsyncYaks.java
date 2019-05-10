@@ -3,14 +3,14 @@ package is.yaks.async;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 import is.yaks.Path;
 
 /**
  * Yaks API entrypoint.
  */
-public interface Yaks {
+public interface AsyncYaks {
 
     public static int DEFAUL_PORT = 7887;
 
@@ -25,14 +25,14 @@ public interface Yaks {
      *            Options to pass to the Yaks implementation (e.g. credentials)
      * @return
      */
-    public static Yaks getInstance(String yaksImplName, ClassLoader classLoader, String... args) {
+    public static AsyncYaks getInstance(String yaksImplName, ClassLoader classLoader, String... args) {
         assert classLoader != null;
         assert yaksImplName != null;
         try {
             Class<?> yaks = classLoader.loadClass(yaksImplName);
             Constructor<?> ctor = yaks.getDeclaredConstructor(String[].class);
             ctor.setAccessible(true);
-            return (Yaks) ctor.newInstance((Object) args);
+            return (AsyncYaks) ctor.newInstance((Object) args);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (NoSuchMethodException e) {
@@ -56,19 +56,19 @@ public interface Yaks {
      * 
      * Valid format for the locator are valid IP addresses as well as the combination IP:PORT.
      */
-    public Yaks login(Properties properties);
+    public AsyncYaks login(Properties properties);
 
     /**
      * Creates an admin workspace that provides helper operations to administer Yaks.
      */
-    public CompletableFuture<Admin> admin();
+    public AsyncAdmin admin();
 
     /**
      * Creates a workspace relative to the provided **path**. Any *put* or *get* operation with relative paths on this
      * workspace will be prepended with the workspace *path*.
      * 
      */
-    public CompletableFuture<Workspace> workspace(Path path);
+    public AsyncWorkspace workspace(Path path);
 
     /**
      * Closes the Yaks api
