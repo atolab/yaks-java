@@ -154,9 +154,10 @@ public class Utils {
         return new byte[] { (byte) (value >> 24), (byte) (value >> 16), (byte) (value >> 8), (byte) value };
     }
 
-    public static void printHex(byte[] bytes) {
+    public static String printHex(byte[] bytes) {
+        String val = "";
         for (int i = 0; i < bytes.length; i++)
-            System.out.print(Integer.toHexString(Byte.toUnsignedInt(bytes[i])) + " ");
-        System.out.println();
+            val += Integer.toHexString(Byte.toUnsignedInt(bytes[i])) + " ";
+        return val;
     }
 }

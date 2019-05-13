@@ -76,7 +76,7 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
 
             int vle = 0;
 
-            while (true) {
+            while (socket.isOpen()) {
 
                 vle = VLEEncoder.read_vle(socket);
                 Thread.sleep(AsyncYaksImpl.TIMEOUT);
