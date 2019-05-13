@@ -13,14 +13,15 @@ import is.yaks.socket.utils.Utils;
 import is.yaks.socket.utils.VLEEncoder;
 
 public class MessageImpl implements Message {
-    private static MessageImpl instance = null;
 
+    private static MessageImpl instance = null;
     // 1VLE max 64bit
     static VLEEncoder encoder;
     // vle length
-    public static int vle_length, vle_bytes;
+    public static long vle_length;
+    public static int vle_bytes;
     // 1VLE max 64bit
-    static int correlation_id;
+    static long correlation_id;
     // 8bit
     static int flags;
     // 1bit
@@ -57,7 +58,7 @@ public class MessageImpl implements Message {
         // 1bit. Initialized to false.
         flag_p = 0;
         // vle_bytes
-        vle_bytes = 8;
+        vle_bytes = 10;
         // vle length
         vle_length = (64 * 1024);
         // messageCode
@@ -99,7 +100,7 @@ public class MessageImpl implements Message {
     }
 
     @Override
-    public int getCorrelationID() {
+    public long getCorrelationID() {
         return correlation_id;
     }
 
@@ -116,10 +117,6 @@ public class MessageImpl implements Message {
     @Override
     public Map<Path, Value> getWorkspaceList() {
         return workspaceList;
-    }
-
-    public void setCorrelationId(int corr_id) {
-        correlation_id = corr_id;
     }
 
     public void setFlag_a() {
@@ -208,6 +205,11 @@ public class MessageImpl implements Message {
     @Override
     public void setValue(Value val) {
         value = val;
+    }
+
+    @Override
+    public void setCorrelationId(long corr_id) {
+        correlation_id = corr_id;
     }
 }
 

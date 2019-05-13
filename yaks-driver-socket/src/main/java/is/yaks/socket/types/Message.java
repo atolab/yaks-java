@@ -52,7 +52,7 @@ public interface Message {
      * 
      * @return correlation id
      */
-    public int getCorrelationID();
+    public long getCorrelationID();
 
     /**
      * Set the flags of the message
@@ -66,7 +66,7 @@ public interface Message {
      * 
      * @param corr_id
      */
-    public void setCorrelationId(int corr_id);
+    public void setCorrelationId(long corr_id);
 
     /**
      * Set the message selector

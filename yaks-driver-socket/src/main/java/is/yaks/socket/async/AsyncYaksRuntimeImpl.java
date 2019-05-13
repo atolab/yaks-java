@@ -43,7 +43,7 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
     int max_buffer_size = (64 * 1024);
 
     private SocketChannel socket;
-    private HashMap<Integer, CompletableFuture<Message>> workingMap;
+    private HashMap<Long, CompletableFuture<Message>> workingMap;
     private HashMap<String, Future<Message>> listenersMap;
     private HashMap<Path, Future<Message>> evalsMap;
     private ByteBufferPoolImpl bytePool;
@@ -74,19 +74,18 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
         boolean isReplyOk = false;
         try {
 
-            int vle = 0;
+            long vle = 0;
 
-            while (socket.isOpen()) {
-
-                vle = VLEEncoder.read_vle(socket);
+            while (socket.isOpen() && socket.isConnected()) {
+                vle = VLEEncoder.read_vle_from_socket(socket);
                 Thread.sleep(AsyncYaksImpl.TIMEOUT);
 
                 if (vle > 0) {
-                    ByteBuffer buffer = ByteBuffer.allocate(vle);
+                    ByteBuffer buffer = ByteBuffer.allocate((int) vle);
                     socket.read(buffer);
                     Message msg = read(buffer);
-                    if (workingMap.containsKey(msg.getCorrelationID())) {
 
+                    if (workingMap.containsKey(msg.getCorrelationID())) {
                         // get the CompletableFuture<Message>> and completed it.
                         CompletableFuture<Message> msg_future = workingMap.get(msg.getCorrelationID());
 
@@ -108,9 +107,6 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
                             break;
                         case OK:
                             System.out.println("[async_yaks_rt] Received OK message");
-
-                            // CompletableFuture<Message> msg_future = workingMap.get(msg.getCorrelationID());
-                            // msg_future.complete(msg);
 
                             isReplyOk = true;
                             break;
@@ -154,7 +150,7 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
             this.socket.configureBlocking(false);
             this.socket.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 
-            this.workingMap = new HashMap<Integer, CompletableFuture<Message>>();
+            this.workingMap = new HashMap<Long, CompletableFuture<Message>>();
             this.listenersMap = new HashMap<String, Future<Message>>();
             this.evalsMap = new HashMap<Path, Future<Message>>();
             this.bytePool = new ByteBufferPoolImpl();
@@ -168,6 +164,7 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
     }
 
     public ByteBuffer write(SocketChannel sock, Message msg) {
+
         ByteBuffer buf_vle = ByteBuffer.allocate(vle_bytes);
         ByteBuffer buf_msg = ByteBuffer.allocate(max_buffer_size);
         try {
@@ -228,7 +225,10 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
 
         msg.setFlags((int) buffer.get()); // get the flags of the msg
 
-        msg.setCorrelationId(VLEEncoder.read_correlation_id(buffer)); // get the correlation_id (vle)
+        msg.setCorrelationId(VLEEncoder.read_vle_from_buffer(buffer)); // gets the correlation_id ( in vle)
+
+        System.out.println("[read().corr_id] = " + msg.getCorrelationID() + " [read().corr_id_hex]:"
+                + Utils.printHex(VLEEncoder.encode(msg.getCorrelationID())));
 
         if ((msgCode == 0xD0) || (msgCode == 0xB2)) {
             if (msg.getFlags() == 1) {
@@ -248,6 +248,7 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
                 }
             }
         }
+
         if (msgCode == 0xD1) {
             int valFormat = (buffer.get() & 0xFF); // read 0x81 = 129
             buffer.get(); // reads out the 0x00
@@ -262,9 +263,10 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
                         byte[] val_format = new byte[2]; // gets the 0x01 0x20
                         buffer.get(val_format, 0, 2);
                     }
-                    int length_value = (int) buffer.get();
-                    byte[] value_bytes = new byte[length_value];
-                    buffer.get(value_bytes, 0, length_value);
+                    // int length_value = (int) buffer.get();
+                    long length_value = VLEEncoder.read_vle_from_buffer(buffer);
+                    byte[] value_bytes = new byte[(int) length_value];
+                    buffer.get(value_bytes, 0, (int) length_value);
 
                     try {
                         strKey = new String(key_bytes, "UTF-8");
@@ -292,10 +294,12 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
 
         workingMap.put(loginM.getCorrelationID(), login_future);
 
-        System.out.println("[async_yaks_rt] Init receivers_loop in yaks_runtime ... ");
+        System.out.println("[process_login().corr_id] " + Utils.printHex(VLEEncoder.encode(loginM.getCorrelationID())));
 
+        System.out.println("[async_yaks_rt] Init receivers_loop in yaks_runtime ... ");
         Thread thr1 = new Thread(async_yaks_rt, "Init async_yaks_rt");
         thr1.start();
+
     }
 
     @Override
@@ -307,6 +311,8 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
             Message workspaceM = new MessageFactory().getMessage(MessageCode.WORKSPACE, null);
             workspaceM.setPath(path);
             if (socket.isConnected()) {
+                System.out.println("[process_workspace().corr_id] "
+                        + Utils.printHex(VLEEncoder.encode(workspaceM.getCorrelationID())));
                 async_yaks_rt.write(socket, workspaceM);
                 workingMap.put(workspaceM.getCorrelationID(), ws_future);
             }
@@ -339,6 +345,9 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
         if (socket.isConnected()) {
             async_yaks_rt.write(socket, putM);
             workingMap.put(putM.getCorrelationID(), put_future);
+            System.out.println("[process_put-storage().corr_id] " + putM.getCorrelationID() + " [hex]:"
+                    + Utils.printHex(VLEEncoder.encode(putM.getCorrelationID())));
+
         }
         Message msg;
         try {
@@ -363,6 +372,7 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
         if (socket.isConnected()) {
             async_yaks_rt.write(socket, getM);
             workingMap.put(getM.getCorrelationID(), get_future);
+
         }
         Message msg;
         try {
@@ -579,11 +589,11 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
         this.socket = socket;
     }
 
-    public HashMap<Integer, CompletableFuture<Message>> getWorkingMap() {
+    public HashMap<Long, CompletableFuture<Message>> getWorkingMap() {
         return workingMap;
     }
 
-    public void setWorkingMap(HashMap<Integer, CompletableFuture<Message>> workingMap) {
+    public void setWorkingMap(HashMap<Long, CompletableFuture<Message>> workingMap) {
         this.workingMap = workingMap;
     }
 

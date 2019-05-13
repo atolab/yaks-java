@@ -21,7 +21,7 @@ import is.yaks.async.AsyncAdmin;
 import is.yaks.async.AsyncWorkspace;
 import is.yaks.async.AsyncYaks;
 
-public class AsyncBasicTest {
+public class AsyncBigPutGetTest {
 
     private static AsyncYaks async_yaks;
     private static AsyncAdmin async_admin;
@@ -30,7 +30,7 @@ public class AsyncBasicTest {
     private Listener obs; // TODO
     private int quorum = 0;
 
-    public static final Logger LOG = LoggerFactory.getLogger(AsyncBasicTest.class);
+    public static final Logger LOG = LoggerFactory.getLogger(AsyncBigPutGetTest.class);
 
     @Before
     public void init() {
@@ -68,28 +68,34 @@ public class AsyncBasicTest {
         Assert.assertNotNull(subid);
     }
 
-    // @Test
-    public void BasicTest() {
+    private static String create_data(int size) {
+        char[] chars = new char[size];
+        Arrays.fill(chars, 'a');
+        return new String(chars);
+    }
 
-        System.out.println(">> [Client] BasicTest ");
-        boolean is_put_ok = async_workspace.put(Path.ofString("/is.yaks.tests/basic"),
-                new Value("ABC", Encoding.STRING), quorum);
+    @Test
+    public void BigPutTest() {
+        System.out.println(">> [Client] BigPutGetTest ");
+
+        Value val_1k = new Value(create_data(1024));
+        boolean is_put_ok = async_workspace.put(Path.ofString("/is.yaks.tests/big"), val_1k, quorum);
         Assert.assertTrue(is_put_ok);
 
-        Map<Path, Value> values = async_workspace.get(YSelector.ofString("/is.yaks.tests/basic"), quorum);
-        String strValue = "";
+        System.out.println(">> [Client] big_get ");
+        Map<Path, Value> values2 = async_workspace.get(YSelector.ofString("/is.yaks.tests/big"), quorum);
+        String strValue2 = "";
         try {
-            for (Map.Entry<Path, Value> entry : values.entrySet()) {
-                strValue = new String(entry.getValue().getValue().getBytes(), "UTF-8");
+            for (Map.Entry<Path, Value> entry : values2.entrySet()) {
+                strValue2 = new String(entry.getValue().getValue().getBytes(), "UTF-8");
             }
-            values.forEach(
+            values2.forEach(
                     (k, v) -> System.out.println("Item : [" + k + "] Value : [" + v.getValue().toString() + "]"));
 
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-        Assert.assertEquals("ABC", strValue);
-
+        Assert.assertEquals(create_data(1024), strValue2);
     }
 
     @After

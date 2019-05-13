@@ -37,9 +37,10 @@ public class Utils {
         return "_" + text.replaceAll("\\-", "_");
     }
 
-    public static int generate_correlation_id() {
+    // returns a positive long number 64 bits
+    public static long generate_correlation_id() {
         Random random = new Random();
-        return random.nextInt();
+        return Math.abs(random.nextLong());
     }
 
     public static ByteBuffer mapToByteBuffer(Map<String, String> map) {

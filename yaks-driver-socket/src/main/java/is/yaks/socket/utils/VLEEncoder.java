@@ -31,9 +31,9 @@ public class VLEEncoder {
         return instance;
     }
 
-    public static byte[] encode(int input) {
+    public static byte[] encode(long input) {
         // first find out how many bytes we need to represent the integer
-        int length = ((32 - Integer.numberOfLeadingZeros(input)) + 6) / 7;
+        int length = ((64 - Long.numberOfLeadingZeros(input)) + 6) / 7;
         // if the integer is 0, we still need 1 byte
         length = length > 0 ? length : 1;
 
@@ -50,13 +50,13 @@ public class VLEEncoder {
         return output;
     }
 
-    public static int decode(byte[] buff) {
-        int value = 0;
+    public static long decode(byte[] buff) {
+        long value = 0;
 
         ByteBuffer bb = ByteBuffer.wrap(buff).order(ByteOrder.BIG_ENDIAN);
 
         for (int i = 0; i < buff.length; i++) {
-            int v = bb.get(i) & 0x7F;
+            long v = bb.get(i) & 0x7F;
 
             value = value | (v << (7 * i));
         }
@@ -64,27 +64,24 @@ public class VLEEncoder {
         return value;
     }
 
-    public static int read_vle(SocketChannel socketChannel) {
-        int vle = 0;
+    public static long read_vle_from_socket(SocketChannel socketChannel) {
+        long vle = 0;
         try {
-            ByteBuffer bs = ByteBuffer.allocate(1);
-            while (socketChannel.read(bs) > 0) {
-                bs.flip();
-                byte currentByte = bs.get();
-                ByteBuffer byteVle = null;
-                while ((currentByte & VLEEncoder.MORE_BYTES_FLAG) != 0) {
-                    byteVle = ByteBuffer.allocate(VLEEncoder.MAX_BYTES).order(ByteOrder.BIG_ENDIAN);
-                    byteVle.put((byte) (currentByte));
-                    bs.clear();
-                    socketChannel.read(bs);
-                    bs.flip();
-                    currentByte = bs.get();
+            ByteBuffer buffer_1byte = ByteBuffer.allocate(1);
+            while (socketChannel.read(buffer_1byte) > 0) {
+                buffer_1byte.flip();
+                byte curByte = buffer_1byte.get();
+                ByteBuffer bb = ByteBuffer.allocate(VLEEncoder.MAX_BYTES).order(ByteOrder.BIG_ENDIAN);
+                while ((curByte & VLEEncoder.MORE_BYTES_FLAG) != 0) {
+                    bb.put((byte) (curByte));
+                    buffer_1byte.clear();
+                    socketChannel.read(buffer_1byte);
+                    buffer_1byte.flip();
+                    curByte = buffer_1byte.get();
                 }
-                if (byteVle != null) {
-                    vle = VLEEncoder.decode(byteVle.array());
-                } else {
-                    vle = currentByte;
-                }
+                bb.put(curByte);
+                bb.flip();
+                vle = VLEEncoder.decode(bb.array());
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -92,7 +89,7 @@ public class VLEEncoder {
         return vle;
     }
 
-    public static int read_correlation_id(ByteBuffer buffer) {
+    public static long read_vle_from_buffer(ByteBuffer buffer) {
         byte curByte = buffer.get();
         ByteBuffer bb = ByteBuffer.allocate(VLEEncoder.MAX_BYTES).order(ByteOrder.BIG_ENDIAN);
         while ((curByte & VLEEncoder.MORE_BYTES_FLAG) != 0) {
@@ -100,6 +97,7 @@ public class VLEEncoder {
             curByte = buffer.get();
         }
         bb.put(curByte);
+        bb.flip();
         return VLEEncoder.decode(bb.array()); // decode the correlation_id
     }
 
