@@ -14,12 +14,14 @@ import org.slf4j.LoggerFactory;
 
 import is.yaks.Encoding;
 import is.yaks.Listener;
+import is.yaks.Observer;
 import is.yaks.Path;
 import is.yaks.Value;
 import is.yaks.YSelector;
 import is.yaks.async.AsyncAdmin;
 import is.yaks.async.AsyncWorkspace;
 import is.yaks.async.AsyncYaks;
+import is.yaks.socket.types.ObserverImpl;
 
 public class AsyncBasicTest {
 
@@ -27,13 +29,17 @@ public class AsyncBasicTest {
     private static AsyncAdmin async_admin;
     private static AsyncWorkspace async_workspace;
 
-    private Listener obs; // TODO
+    private Observer obs;
+
     private int quorum = 0;
 
     public static final Logger LOG = LoggerFactory.getLogger(AsyncBasicTest.class);
 
     @Before
     public void init() {
+
+        obs = ObserverImpl.getInstance();
+
         Properties properties = new Properties();
         properties.setProperty("host", "localhost");
         properties.setProperty("port", "7887");
@@ -68,7 +74,7 @@ public class AsyncBasicTest {
         Assert.assertNotNull(subid);
     }
 
-    // @Test
+    @Test
     public void BasicTest() {
 
         System.out.println(">> [Client] BasicTest ");

@@ -1,10 +1,8 @@
 package is.yaks.async;
 
 import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
 
-import is.yaks.Listener;
+import is.yaks.Observer;
 import is.yaks.Path;
 import is.yaks.Value;
 import is.yaks.YSelector;
@@ -81,7 +79,7 @@ public interface AsyncWorkspace {
      * 
      * @return sid subscriber_id
      */
-    public String subscribe(YSelector selector, Listener obs);
+    public String subscribe(YSelector selector, Observer obs);
 
     /**
      * Unregisters a previous subscription with the identifier **subid**
@@ -92,7 +90,7 @@ public interface AsyncWorkspace {
      * Registers an evaluation function **eval** under the provided **path**. The **path** can be absolute or relative
      * to the workspace.
      */
-    public boolean register_eval(Path path, Listener evcb);
+    public boolean register_eval(Path path, Observer eval_obs);
 
     /**
      * Unregisters an previously registered evaluation function under the give [path]. The [path] can be absolute or

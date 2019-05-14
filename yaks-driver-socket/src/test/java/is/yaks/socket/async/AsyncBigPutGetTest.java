@@ -12,8 +12,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import is.yaks.Encoding;
-import is.yaks.Listener;
+import is.yaks.Observer;
 import is.yaks.Path;
 import is.yaks.Value;
 import is.yaks.YSelector;
@@ -27,7 +26,7 @@ public class AsyncBigPutGetTest {
     private static AsyncAdmin async_admin;
     private static AsyncWorkspace async_workspace;
 
-    private Listener obs; // TODO
+    private Observer obs; // TODO
     private int quorum = 0;
 
     public static final Logger LOG = LoggerFactory.getLogger(AsyncBigPutGetTest.class);
@@ -74,7 +73,7 @@ public class AsyncBigPutGetTest {
         return new String(chars);
     }
 
-    @Test
+    // @Test
     public void BigPutTest() {
         System.out.println(">> [Client] BigPutGetTest ");
 

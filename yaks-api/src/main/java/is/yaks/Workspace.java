@@ -26,7 +26,7 @@ public interface Workspace {
      * currently no matching storage. In this case the only effect of this operation will be that of triggering matching
      * subscriber, if any exist.
      */
-    public boolean put(Path p, Value v, int quorum);
+    public boolean put(Path path, Value value, int quorum);
 
     /**
      * Allows to **put** a delta, thus avoiding to distribute the entire value.
@@ -78,7 +78,7 @@ public interface Workspace {
      * 
      * @return sid subscriber_id
      */
-    public String subscribe(YSelector selector, Listener obs);
+    public String subscribe(YSelector yselector, Observer obs);
 
     /**
      * Unregisters a previous subscription with the identifier **subid**
@@ -89,7 +89,7 @@ public interface Workspace {
      * Registers an evaluation function **eval** under the provided **path**. The **path** can be absolute or relative
      * to the workspace.
      */
-    public void register_eval(Path path, Listener eval_obs);
+    public void register_eval(Path path, Observer eval_obs);
 
     /**
      * Unregisters an previously registered evaluation function under the give [path]. The [path] can be absolute or
@@ -108,7 +108,7 @@ public interface Workspace {
      * returned with their original encoding. The **fallback** indicates the action that YAKS will perform if the
      * transcoding of a value fails.
      */
-    public Map<Path, Value> eval(YSelector selector, int multiplicity);
+    public Map<Path, Value> eval(YSelector yselector, int multiplicity);
 
     public int getWsid();
 

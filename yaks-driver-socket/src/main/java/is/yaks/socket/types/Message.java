@@ -141,6 +141,20 @@ public interface Message {
      */
     public void setValue(Value value);
 
+    /**
+     * Get the subscriber id
+     * 
+     * @param string
+     */
+    public String getSubid();
+
+    /**
+     * Set the subscriber id
+     * 
+     * @param string
+     */
+    public void setSubid(String string);
+
 }
 
 interface Header {

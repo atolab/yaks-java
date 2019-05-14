@@ -3,7 +3,7 @@ package is.yaks.socket.async;
 import java.util.Map;
 import java.util.Properties;
 
-import is.yaks.Listener;
+import is.yaks.Observer;
 import is.yaks.Path;
 import is.yaks.Value;
 import is.yaks.YSelector;
@@ -30,11 +30,11 @@ public interface AsyncYaksRuntime {
 
     public boolean process_remove(Path path, int quorum);
 
-    public String process_subscribe(YSelector yselector, Listener obs);
+    public String process_subscribe(YSelector yselector, Observer obs);
 
     public boolean process_unsubscribe(String subid);
 
-    public boolean process_register_eval(Path path, Listener eval_obs);
+    public boolean process_register_eval(Path path, Observer eval_obs);
 
     public boolean process_unregister_eval(Path path);
 

@@ -33,6 +33,7 @@ public class MessageImpl implements Message {
 
     int quorum = 0;
     int wsid = 0;
+    String subid = "";
 
     Path path;
     Value value;
@@ -75,6 +76,8 @@ public class MessageImpl implements Message {
         workspaceList = new HashMap<Path, Value>();
         // valuesList
         valuesList = new HashMap<Path, Value>();
+        //
+
     }
 
     /**
@@ -210,6 +213,16 @@ public class MessageImpl implements Message {
     @Override
     public void setCorrelationId(long corr_id) {
         correlation_id = corr_id;
+    }
+
+    @Override
+    public String getSubid() {
+        return subid;
+    }
+
+    @Override
+    public void setSubid(String subid) {
+        this.subid = subid;
     }
 }
 

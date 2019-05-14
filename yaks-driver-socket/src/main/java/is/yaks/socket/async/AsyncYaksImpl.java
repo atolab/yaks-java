@@ -14,7 +14,7 @@ public class AsyncYaksImpl implements AsyncYaks {
 
     private AsyncYaksRuntimeImpl async_yaks_rt;
 
-    public static final long TIMEOUT = 500l; // i.e 5l = 5ms, 1000l = i sec
+    public static final long TIMEOUT = 250l; // i.e 5l = 5ms, 1000l = i sec
 
     // private YaksConfiguration config = YaksConfiguration.getInstance();
 

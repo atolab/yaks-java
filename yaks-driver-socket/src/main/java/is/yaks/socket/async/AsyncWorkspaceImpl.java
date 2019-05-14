@@ -1,18 +1,22 @@
 package is.yaks.socket.async;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
-import is.yaks.Listener;
+import is.yaks.Observer;
 import is.yaks.Path;
 import is.yaks.Value;
 import is.yaks.YSelector;
 import is.yaks.async.AsyncWorkspace;
-import is.yaks.async.AsyncYaks;
 
 public class AsyncWorkspaceImpl implements AsyncWorkspace {
 
     public Path path = null;
     public int wsid = 0;
+
+    private List<Observer> observers = new ArrayList<Observer>();
+    // private List<Observer> eval_observers = new ArrayList<Observer>();
 
     private static AsyncWorkspaceImpl instance;
 
@@ -31,11 +35,13 @@ public class AsyncWorkspaceImpl implements AsyncWorkspace {
 
     @Override
     public boolean put(Path path, Value val, int quorum) {
+        notifyAllObserversPut(path, val);
         return async_yaks_rt.process_put(path, val, quorum);
     }
 
     @Override
     public boolean update(Path path, Value val, int quorum) {
+        notifyAllObserversUpdate(path, val);
         return async_yaks_rt.process_update(path, val, quorum);
     }
 
@@ -46,12 +52,14 @@ public class AsyncWorkspaceImpl implements AsyncWorkspace {
 
     @Override
     public boolean remove(Path path, int quorum) {
+        notifyAllObserversRemove(path, null);
         return async_yaks_rt.process_remove(path, quorum);
     }
 
     @Override
-    public String subscribe(YSelector selector, Listener listener) {
-        return async_yaks_rt.process_subscribe(selector, listener);
+    public String subscribe(YSelector selector, Observer observer) {
+        attach(observer);
+        return async_yaks_rt.process_subscribe(selector, observer);
     }
 
     @Override
@@ -60,7 +68,7 @@ public class AsyncWorkspaceImpl implements AsyncWorkspace {
     }
 
     @Override
-    public boolean register_eval(Path path, Listener eval_obs) {
+    public boolean register_eval(Path path, Observer eval_obs) {
         return async_yaks_rt.process_register_eval(path, eval_obs);
     }
 
@@ -91,4 +99,33 @@ public class AsyncWorkspaceImpl implements AsyncWorkspace {
     public int getWsid() {
         return wsid;
     }
+
+    public void attach(Observer observer) {
+        observers.add(observer);
+    }
+
+    public void notifyAllObserversPut(Path p, Value v) {
+        if (!observers.isEmpty()) {
+            for (Observer observer : observers) {
+                observer.onPut(p, v);
+            }
+        }
+    }
+
+    public void notifyAllObserversUpdate(Path p, Value v) {
+        if (!observers.isEmpty()) {
+            for (Observer observer : observers) {
+                observer.onUpdate(p, v);
+            }
+        }
+    }
+
+    public void notifyAllObserversRemove(Path p, Value v) {
+        if (!observers.isEmpty()) {
+            for (Observer observer : observers) {
+                observer.onRemove(p, v);
+            }
+        }
+    }
+
 }
