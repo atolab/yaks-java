@@ -55,7 +55,7 @@ public class AsyncBigPutGetTest {
         Assert.assertNotNull(async_admin);
 
         // create storage
-        String stid = "demo";
+        String stid = "big";
         properties = new Properties();
         properties.setProperty("selector", "/is.yaks.test/**");
         System.out.println(">> [Client] storage ");

@@ -56,7 +56,7 @@ public class AsyncBasicTest {
         Assert.assertNotNull(async_admin);
 
         // create storage
-        String stid = "demo";
+        String stid = "basic";
         properties = new Properties();
         properties.setProperty("selector", "/is.yaks.test/**");
         System.out.println(">> [Client] storage ");

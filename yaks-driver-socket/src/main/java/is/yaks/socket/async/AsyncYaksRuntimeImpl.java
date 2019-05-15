@@ -101,10 +101,10 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
                         break;
                     case EVAL:
                         if (evalsFutureMap.containsKey(msg.getPath().toString())) {
-                        	 msg_future = evalsFutureMap.get(msg.getPath().toString());
-                        	 msg_future.complete(msg);
-                        	 evalsFutureMap.remove(msg.getPath().toString());
-                        } 
+                            msg_future = evalsFutureMap.get(msg.getPath().toString());
+                            msg_future.complete(msg);
+                            evalsFutureMap.remove(msg.getPath().toString());
+                        }
                         break;
                     case OK:
                         if (workingFutureMap.containsKey(msg.getCorrelationID())) {
@@ -112,7 +112,7 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
                             msg_future = workingFutureMap.get(msg.getCorrelationID());
                             msg_future.complete(msg);
                             workingFutureMap.remove(msg.getCorrelationID());
-                        } 
+                        }
                         break;
                     default:
                     }
@@ -172,9 +172,9 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
         try {
             buf_msg.put((byte) msg.getMessageCode().getValue());
             buf_msg.put((byte) msg.getFlags());
-	        if(msg.getCorrelationID() > 0) {   
-	            buf_msg.put(VLEEncoder.encode(msg.getCorrelationID()));
-	        }
+            if (msg.getCorrelationID() > 0) {
+                buf_msg.put(VLEEncoder.encode(msg.getCorrelationID()));
+            }
             if (!msg.getPropertiesList().isEmpty()) {
                 buf_msg.put(Utils.porpertiesListToByteBuffer(msg.getPropertiesList()));
             }
@@ -363,7 +363,7 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
             workingFutureMap.put(putM.getCorrelationID(), put_future);
         }
         try {
-        	Message msg = put_future.get();
+            Message msg = put_future.get();
             if (msg != null)
                 is_put_ok = true;
         } catch (InterruptedException e) {
@@ -550,7 +550,7 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
         String values = "";
         Properties properties = new Properties();
         Map<Path, Value> kvs = new HashMap<Path, Value>();
-        
+
         CompletableFuture<Message> msg_future_1 = new CompletableFuture<Message>();
         CompletableFuture<Message> msg_future_2 = new CompletableFuture<Message>();
 
@@ -559,14 +559,14 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
 
         String sPath = "", sProp = "";
         if (yselector.toString().contains("?")) {
-            sPath = async_workspace.getPath().toString().concat(yselector.toString().substring(0, yselector.toString().indexOf("?")));
+            sPath = async_workspace.getPath().toString()
+                    .concat(yselector.toString().substring(0, yselector.toString().indexOf("?")));
             sProp = yselector.toString().substring(yselector.toString().indexOf("?") + 1);
             if (sProp.contains("(") && sProp.contains(")")) {
-            	sProp = sProp.substring(sProp.indexOf("(") + 1, sProp.indexOf(")"));
+                sProp = sProp.substring(sProp.indexOf("(") + 1, sProp.indexOf(")"));
             }
             properties.put(sProp.substring(0, sProp.indexOf("=")), sProp.substring(sProp.indexOf("=") + 1));
-        } else 
-        {
+        } else {
             sPath = async_workspace.getPath().toString().concat(yselector.toString());
         }
         evalM.setPath(new Path(sPath));
@@ -575,7 +575,7 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
         evalsFutureMap.put(evalM.getPath().toString(), msg_future_2);
 
         try {
-        	Message msg_eval_return = msg_future_2.get();
+            Message msg_eval_return = msg_future_2.get();
             long corr_id = msg_eval_return.getCorrelationID();
             Observer eval_obs = evalsMap.get(msg_eval_return.getPath());
             if (eval_obs != null) {
@@ -585,7 +585,7 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
                 valuesM.add_values(kvs);
                 valuesM.setCorrelationId(corr_id);
                 async_yaks_rt.write(socket, valuesM);
-                
+
                 Message msg_values_return = msg_future_1.get();
                 kvs = msg_values_return.get_values();
                 if (!kvs.isEmpty()) {

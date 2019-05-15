@@ -1,9 +1,11 @@
 package is.yaks.socket.async;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.Properties;
+
+import org.junit.After;
+import org.junit.Test;
 
 import is.yaks.Encoding;
 import is.yaks.Observer;
@@ -15,7 +17,7 @@ import is.yaks.async.AsyncWorkspace;
 import is.yaks.async.AsyncYaks;
 import is.yaks.socket.types.ObserverImpl;
 
-public class AsyncSimpleClient {
+public class AsyncSimpleClientTest {
 
     private static AsyncYaks async_yaks;
     private static AsyncAdmin async_admin;
@@ -25,21 +27,21 @@ public class AsyncSimpleClient {
     private static Observer eval_callback;
     private static Observer eval_callback2;
 
-    public void print_admin_space(AsyncWorkspace async_ws) 
-    {
-    	YSelector sel = new YSelector("/@/local/**");
-    	System.out.println("\n------ADMIN SPACE ------");
-    	 Map<Path, Value> kvs = async_ws.get(sel, 0);
-         if (kvs != null) {
-             kvs.forEach((k, v) -> System.out.println(k + " :\n " + v.getValue().toString()));
-         }
-         System.out.println("--------------------\n");
+    public void print_admin_space(AsyncWorkspace async_ws) {
+        YSelector sel = new YSelector("/@/local/**");
+        System.out.println("\n------ADMIN SPACE ------");
+        Map<Path, Value> kvs = async_ws.get(sel, 0);
+        if (kvs != null) {
+            kvs.forEach((k, v) -> System.out.println(k + " :\n " + v.getValue().toString()));
+        }
+        System.out.println("--------------------\n");
     }
-    
-    public static void main(String[] args) throws IOException, InterruptedException {
 
-    	AsyncSimpleClient client = new AsyncSimpleClient();
-    	
+    @Test
+    public void AsyncSimpleClientTest() {
+
+        AsyncSimpleClientTest client = new AsyncSimpleClientTest();
+
         // creating Yaks api
         System.out.println(">> Creating api");
         async_yaks = AsyncYaksImpl.getInstance();
@@ -64,7 +66,7 @@ public class AsyncSimpleClient {
         async_admin = async_yaks.admin();
 
         System.out.println(">> creates storage");
-        String stid = "demo";
+        String stid = "client";
         properties = new Properties();
         properties.setProperty("selector", "/myyaks/**");
         async_admin.add_storage(properties, stid, "Memory");
@@ -75,7 +77,7 @@ public class AsyncSimpleClient {
         String subid = async_workspace.subscribe(YSelector.ofString("/myyaks/example/**"), observer);
 
         client.print_admin_space(async_workspace);
-        
+
         System.out.println(">> Put Tuple 1 - subid: " + subid);
         async_workspace.put(Path.ofString("/myyaks/example/one"), new Value("hello!", Encoding.STRING), quorum);
         // System.out.println("Called OBSERVER : "+listener.toString());
@@ -218,7 +220,7 @@ public class AsyncSimpleClient {
         }
 
         client.print_admin_space(async_workspace);
-        
+
         System.out.println(">> Register Eval #1");
         async_workspace.register_eval(Path.ofString("/test_eval"), eval_callback);
 
@@ -268,12 +270,14 @@ public class AsyncSimpleClient {
         async_admin.remove_storage(stid, async_yaks);
 
         client.print_admin_space(async_workspace);
-        
+
+    }
+
+    @After
+    public void stop() {
         System.out.println(">> Close-logout");
         async_yaks.logout();
         System.out.println("bye!");
-
-        // close Yaks api
         async_yaks.close();
     }
 }
