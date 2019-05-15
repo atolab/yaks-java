@@ -7,7 +7,7 @@ public class Path implements Comparable<Path> {
     private Encoding encoding;
     private String pathValue;
 
-    private Path(String p) {
+    public Path(String p) {
         if (p == null) {
             throw new NullPointerException("The given path is null");
         }

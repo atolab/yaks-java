@@ -1,5 +1,7 @@
 package is.yaks.socket.types;
 
+import java.util.Properties;
+
 import is.yaks.Observer;
 import is.yaks.Path;
 import is.yaks.Value;
@@ -26,19 +28,29 @@ public class ObserverImpl implements Observer {
 
     @Override
     public void onPut(Path key, Value value) {
-        System.out.println(">>>> [APP] [OBS] received Put of Key: " + key + " Value: " + value);
-
+        System.out.println(">>>> [APP] [OBS] received Put of Key: " + key + " Value: " + value.getValue());
     }
 
     @Override
     public void onUpdate(Path key, Value value) {
-        System.out.println(">>>> [APP] [OBS] received Update of Key: " + key + " Value: " + value);
-
+        System.out.println(">>>> [APP] [OBS] received Update of Key: " + key + " Value: " + value.getValue());
     }
 
     @Override
-    public void onRemove(Path key, Value value) {
-        System.out.println(">>>> [APP] [OBS] received Remove of Key: " + key + " Value: " + value);
+    public void onRemove(Path key) {
+        System.out.println(">>>> [APP] [OBS] received Remove of Key: " + key);
+    }
 
+    @Override
+    public String evalCallback(Path path, Properties properties) {
+        String name = "";
+        if (!properties.isEmpty()) {
+            if (properties.get("name") != null)
+                name = properties.get("name").toString();
+        } else {
+            name = "World";
+        }
+        System.out.println(">>>> [APP] [OBS] eval_callback called for path: " + path + " and property 'name': " + name);
+        return "Hello " + name + " !!";
     }
 }

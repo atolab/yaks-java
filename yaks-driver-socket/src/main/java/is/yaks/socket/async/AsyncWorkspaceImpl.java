@@ -3,6 +3,7 @@ package is.yaks.socket.async;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import is.yaks.Observer;
 import is.yaks.Path;
@@ -16,7 +17,7 @@ public class AsyncWorkspaceImpl implements AsyncWorkspace {
     public int wsid = 0;
 
     private List<Observer> observers = new ArrayList<Observer>();
-    // private List<Observer> eval_observers = new ArrayList<Observer>();
+    private List<Observer> eval_observers = new ArrayList<Observer>();
 
     private static AsyncWorkspaceImpl instance;
 
@@ -52,7 +53,7 @@ public class AsyncWorkspaceImpl implements AsyncWorkspace {
 
     @Override
     public boolean remove(Path path, int quorum) {
-        notifyAllObserversRemove(path, null);
+        notifyAllObserversRemove(path);
         return async_yaks_rt.process_remove(path, quorum);
     }
 
@@ -64,11 +65,13 @@ public class AsyncWorkspaceImpl implements AsyncWorkspace {
 
     @Override
     public boolean unsubscribe(String subid) {
+        observers.clear();
         return async_yaks_rt.process_unsubscribe(subid);
     }
 
     @Override
     public boolean register_eval(Path path, Observer eval_obs) {
+        attachEvals(eval_obs);
         return async_yaks_rt.process_register_eval(path, eval_obs);
     }
 
@@ -79,6 +82,7 @@ public class AsyncWorkspaceImpl implements AsyncWorkspace {
 
     @Override
     public Map<Path, Value> eval(YSelector selector, int multiplicity) {
+        // notifyAllObserversEval(new Path(selector.toString()), null);
         return async_yaks_rt.process_eval(selector, multiplicity);
     }
 
@@ -104,6 +108,10 @@ public class AsyncWorkspaceImpl implements AsyncWorkspace {
         observers.add(observer);
     }
 
+    public void attachEvals(Observer eval_observer) {
+        eval_observers.add(eval_observer);
+    }
+
     public void notifyAllObserversPut(Path p, Value v) {
         if (!observers.isEmpty()) {
             for (Observer observer : observers) {
@@ -120,12 +128,22 @@ public class AsyncWorkspaceImpl implements AsyncWorkspace {
         }
     }
 
-    public void notifyAllObserversRemove(Path p, Value v) {
+    public void notifyAllObserversRemove(Path p) {
         if (!observers.isEmpty()) {
             for (Observer observer : observers) {
-                observer.onRemove(p, v);
+                observer.onRemove(p);
             }
         }
+    }
+
+    public String notifyAllObserversEval(Path path, Properties prop) {
+        String val = "";
+        if (!eval_observers.isEmpty()) {
+            for (Observer eval_observer : eval_observers) {
+                val = eval_observer.evalCallback(path, prop);
+            }
+        }
+        return val;
     }
 
 }

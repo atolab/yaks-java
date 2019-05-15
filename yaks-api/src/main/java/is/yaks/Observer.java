@@ -1,13 +1,13 @@
 package is.yaks;
 
-public interface Observer {
-    // public void onData(Map<Path,Value> map);
-    //
-    // public void onData(Path key, Value value);
+import java.util.Properties;
 
+public interface Observer {
     public void onPut(Path key, Value value);
 
     public void onUpdate(Path key, Value value);
 
-    public void onRemove(Path key, Value value);
+    public void onRemove(Path key);
+
+    public String evalCallback(Path path, Properties properties);
 }

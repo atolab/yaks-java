@@ -7,8 +7,8 @@ import java.util.Properties;
 
 import is.yaks.Encoding;
 import is.yaks.Path;
-import is.yaks.YSelector;
 import is.yaks.Value;
+import is.yaks.YSelector;
 import is.yaks.socket.utils.Utils;
 import is.yaks.socket.utils.VLEEncoder;
 
@@ -21,7 +21,7 @@ public class MessageImpl implements Message {
     public static long vle_length;
     public static int vle_bytes;
     // 1VLE max 64bit
-    static long correlation_id;
+    public long correlation_id;
     // 8bit
     static int flags;
     // 1bit
@@ -142,8 +142,13 @@ public class MessageImpl implements Message {
     }
 
     @Override
-    public void add_value(Path path, Value val) {
-        valuesList.put(path, val);
+    public void add_values(Map<Path, Value> kvs) {
+        valuesList = kvs;
+    }
+
+    @Override
+    public Map<Path, Value> get_values() {
+        return valuesList;
     }
 
     @Override
@@ -212,7 +217,7 @@ public class MessageImpl implements Message {
 
     @Override
     public void setCorrelationId(long corr_id) {
-        correlation_id = corr_id;
+        this.correlation_id = corr_id;
     }
 
     @Override
@@ -223,6 +228,15 @@ public class MessageImpl implements Message {
     @Override
     public void setSubid(String subid) {
         this.subid = subid;
+    }
+
+    @Override
+    public Properties getProperties() {
+        Properties pro = new Properties();
+        for (Map.Entry<String, String> p : this.propertiesList.entrySet()) {
+            pro.put(p.getKey(), p.getValue());
+        }
+        return pro;
     }
 }
 

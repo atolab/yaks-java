@@ -25,7 +25,6 @@ public class AsyncSocketClient {
     private static Observer eval_callback;
     private static Observer eval_callback2;
 
-    @SuppressWarnings("static-access")
     public static void main(String[] args) throws IOException, InterruptedException {
 
         // creating Yaks api
@@ -34,8 +33,8 @@ public class AsyncSocketClient {
 
         // initializing the observers
         observer = ObserverImpl.getInstance();
-        // eval_callback = new ObserverImpl();
-        // eval_callback2 = new ObserverImpl();
+        eval_callback = ObserverImpl.getInstance();
+        eval_callback2 = ObserverImpl.getInstance();
 
         // creating the connection properties
         Properties properties = new Properties();
@@ -82,8 +81,9 @@ public class AsyncSocketClient {
         System.out.println(">> Get Tuple 1");
         Map<Path, Value> kvs = async_workspace.get(YSelector.ofString("/myyaks/example/one"), 0);
 
-        String strKey = "", strKey2 = "", strKey3 = "", strKey4 = "", strKey5 = "", strKey6 = "";
-        String strValue = "", strValue2 = "", strValue3 = "", strValue4 = "", strValue5 = "", strValue6 = "";
+        String strKey = "", strKey2 = "", strKey4 = "", strKey5 = "", strKey6 = "", strKey7 = "", strKey8 = "";
+        String strValue = "", strValue2 = "", strValue4 = "", strValue5 = "", strValue6 = "", strValue7 = "",
+                strValue8 = "";
         if (kvs != null) {
             try {
                 for (Map.Entry<Path, Value> entry : kvs.entrySet()) {
@@ -116,11 +116,13 @@ public class AsyncSocketClient {
 
         System.out.println(">> Get Tuple 3");
         Map<Path, Value> kvs3 = async_workspace.get(YSelector.ofString("/myyaks/example/*"), 0);
+        String str3 = "", strKey3 = "", strValue3 = "";
         if (kvs3 != null) {
             try {
                 for (Map.Entry<Path, Value> entry : kvs3.entrySet()) {
-                    strKey3 = entry.getKey().toString();
-                    strValue3 = new String(entry.getValue().getValue().getBytes(), "UTF-8");
+                    strKey3 += entry.getKey().toString();
+                    strValue3 += new String(entry.getValue().getValue().getBytes(), "UTF-8");
+                    str3 += "(" + strKey3 + "," + strValue3 + ")";
                 }
                 kvs3.forEach((k, v) -> System.out.println("Item : " + k + " Value : " + v.getValue().toString()));
 
@@ -128,7 +130,7 @@ public class AsyncSocketClient {
                 e.printStackTrace();
             }
         }
-        System.out.println("GET: [" + strKey3 + ", " + strValue3 + "]");
+        System.out.println("GET: [" + str3 + "]");
 
         System.out.println(">> Remove Tuple");
         System.out.println("REMOVE: [" + async_workspace.remove(Path.ofString("/myyaks/example/one"), quorum) + "]");
@@ -172,14 +174,28 @@ public class AsyncSocketClient {
         }
         System.out.println("GET: [" + strKey5 + ", " + strValue5 + "]");
 
-        System.out.println(">> Create subscription without listener");
+        System.out.println(">> Create subscription with listener");
         String sid2 = async_workspace.subscribe(YSelector.ofString("/myyaks/example2/**"), observer);
 
         System.out.println(">> Put Tuple");
         async_workspace.put(Path.ofString("/myyaks/example2/three"), new Value("hello3!", Encoding.STRING), quorum);
 
         System.out.println(">> Get Tuple");
-        System.out.println("GET: [" + async_workspace.get(YSelector.ofString("/myyaks/example2/three"), 0) + "]");
+
+        Map<Path, Value> kvs6 = async_workspace.get(YSelector.ofString("/myyaks/example2/three"), 0);
+        if (kvs6 != null) {
+            try {
+                for (Map.Entry<Path, Value> entry : kvs6.entrySet()) {
+                    strKey6 = entry.getKey().toString();
+                    strValue6 = new String(entry.getValue().getValue().getBytes(), "UTF-8");
+                }
+                kvs6.forEach((k, v) -> System.out.println("Item : " + k + " Value : " + v.getValue().toString()));
+
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+        }
+        System.out.println("GET: [(" + strKey6 + ", " + strValue6 + ")]");
 
         System.out.println(">> Unsubscribe");
         if (sid2 != null && !sid2.equals("")) {
@@ -194,22 +210,39 @@ public class AsyncSocketClient {
 
         // let%lwt _ = print_admin_space workspace in
 
-        System.out.println(">> Get on Eval");
-        Map<Path, Value> kvs6 = async_workspace.eval(YSelector.ofString("/myyaks/key1?(param=1)"), 0);
+        System.out.println(">> Calling eval #1");
+        Map<Path, Value> kvs7 = async_workspace.eval(YSelector.ofString("/test_eval"), 0);
 
-        if (kvs6 != null) {
+        if (kvs7 != null) {
             try {
-                for (Map.Entry<Path, Value> entry : kvs6.entrySet()) {
-                    strKey6 = entry.getKey().toString();
-                    strValue6 = new String(entry.getValue().getValue().getBytes(), "UTF-8");
+                for (Map.Entry<Path, Value> entry : kvs7.entrySet()) {
+                    strKey7 = entry.getKey().toString();
+                    strValue7 = new String(entry.getValue().getValue().getBytes(), "UTF-8");
                 }
-                kvs6.forEach((k, v) -> System.out.println("Item : " + k + " Value : " + v.getValue().toString()));
+                kvs7.forEach((k, v) -> System.out.println("Item : " + k + " Value : " + v.getValue().toString()));
 
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
         }
-        System.out.println("GET: [" + strKey6 + ", " + strValue6 + "]");
+        System.out.println("GET: [" + strKey7 + ", " + strValue7 + "]");
+
+        System.out.println(">> Calling eval #2");
+        Map<Path, Value> kvs8 = async_workspace.eval(YSelector.ofString("/test_eval2?(name=Bob)"), 0);
+
+        if (kvs8 != null) {
+            try {
+                for (Map.Entry<Path, Value> entry : kvs8.entrySet()) {
+                    strKey8 = entry.getKey().toString();
+                    strValue8 = new String(entry.getValue().getValue().getBytes(), "UTF-8");
+                }
+                kvs8.forEach((k, v) -> System.out.println("Item : " + k + " Value : " + v.getValue().toString()));
+
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+        }
+        System.out.println("GET: [" + strKey8 + ", " + strValue8 + "]");
 
         System.out.println(">> Unregister Eval");
         async_workspace.unregister_eval(Path.ofString("/myyaks/key1"));

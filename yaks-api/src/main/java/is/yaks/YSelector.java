@@ -6,7 +6,7 @@ public final class YSelector implements Comparable<YSelector> {
 
     private String path;
 
-    private YSelector(String s) throws IllegalArgumentException {
+    public YSelector(String s) throws IllegalArgumentException {
         if (s == null) {
             throw new IllegalArgumentException("Provided selector string is null");
         }

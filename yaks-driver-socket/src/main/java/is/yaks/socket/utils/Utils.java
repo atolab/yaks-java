@@ -99,6 +99,31 @@ public class Utils {
         return buff;
     }
 
+    public static ByteBuffer valuesToByteBuffer(Map<Path, Value> kvs) {
+        // ByteBuffer buf_vle = ByteBuffer.allocate(MessageImpl.vle_bytes);
+        ByteBuffer buf_vals = ByteBuffer.allocate(max_buffer_size);
+
+        for (Map.Entry<Path, Value> entry : kvs.entrySet()) {
+            buf_vals.put((byte) Encoding.RAW.getIndex());
+            buf_vals.put((byte) entry.getKey().toString().length());
+            buf_vals.put(entry.getKey().toString().getBytes());
+            buf_vals.put((byte) Encoding.STRING.getIndex());
+            buf_vals.put((byte) entry.getValue().getValue().toString().length());
+            buf_vals.put(entry.getValue().getValue().toString().getBytes());
+        }
+
+        // calculate the vals length
+        buf_vals.flip();
+        // buf_vle.put(VLEEncoder.encode(buf_vals.limit()));
+        // buf_vle.flip();
+        //
+        // ByteBuffer buff = ByteBuffer.allocate(buf_vals.limit());
+        // buff.put(buf_vle);
+        // buff.put(buf_vals);
+        // buff.flip();
+        return buf_vals;
+    }
+
     public static ByteBuffer workspaceListToByteBuffer(Map<Path, Value> wkspList) {
         ByteBuffer buffer = ByteBuffer.allocate(max_buffer_size);
         buffer.put(VLEEncoder.encode(wkspList.size())); // put the size of the map i.e. 0x01

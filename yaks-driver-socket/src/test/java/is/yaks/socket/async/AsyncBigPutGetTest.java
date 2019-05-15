@@ -19,6 +19,7 @@ import is.yaks.YSelector;
 import is.yaks.async.AsyncAdmin;
 import is.yaks.async.AsyncWorkspace;
 import is.yaks.async.AsyncYaks;
+import is.yaks.socket.types.ObserverImpl;
 
 public class AsyncBigPutGetTest {
 
@@ -26,13 +27,16 @@ public class AsyncBigPutGetTest {
     private static AsyncAdmin async_admin;
     private static AsyncWorkspace async_workspace;
 
-    private Observer obs; // TODO
+    private Observer obs;
     private int quorum = 0;
 
     public static final Logger LOG = LoggerFactory.getLogger(AsyncBigPutGetTest.class);
 
     @Before
     public void init() {
+
+        obs = ObserverImpl.getInstance();
+
         Properties properties = new Properties();
         properties.setProperty("host", "localhost");
         properties.setProperty("port", "7887");
@@ -73,7 +77,7 @@ public class AsyncBigPutGetTest {
         return new String(chars);
     }
 
-    // @Test
+    @Test
     public void BigPutTest() {
         System.out.println(">> [Client] BigPutGetTest ");
 

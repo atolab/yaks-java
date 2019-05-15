@@ -1,7 +1,6 @@
 package is.yaks.socket.async;
 
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
 
@@ -13,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import is.yaks.Encoding;
-import is.yaks.Listener;
 import is.yaks.Observer;
 import is.yaks.Path;
 import is.yaks.Value;
@@ -77,24 +75,42 @@ public class AsyncBasicTest {
     @Test
     public void BasicTest() {
 
-        System.out.println(">> [Client] BasicTest ");
+        System.out.println(">> [Client] Put ");
         boolean is_put_ok = async_workspace.put(Path.ofString("/is.yaks.tests/basic"),
                 new Value("ABC", Encoding.STRING), quorum);
         Assert.assertTrue(is_put_ok);
 
-        Map<Path, Value> values = async_workspace.get(YSelector.ofString("/is.yaks.tests/basic"), quorum);
+        System.out.println(">> [Client] Get ");
+        Map<Path, Value> kvs = async_workspace.get(YSelector.ofString("/is.yaks.tests/basic"), quorum);
         String strValue = "";
         try {
-            for (Map.Entry<Path, Value> entry : values.entrySet()) {
+            for (Map.Entry<Path, Value> entry : kvs.entrySet()) {
                 strValue = new String(entry.getValue().getValue().getBytes(), "UTF-8");
             }
-            values.forEach(
-                    (k, v) -> System.out.println("Item : [" + k + "] Value : [" + v.getValue().toString() + "]"));
+            kvs.forEach((k, v) -> System.out.println("Item : [" + k + "] Value : [" + v.getValue().toString() + "]"));
 
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
         Assert.assertEquals("ABC", strValue);
+
+        System.out.println(">> [Client] Remove ");
+        boolean is_remove_ok = async_workspace.remove(Path.ofString("/is.yaks.tests/basic"), quorum);
+        Assert.assertTrue(is_remove_ok);
+
+        System.out.println(">> [Client] Get #2");
+        Map<Path, Value> kvs2 = async_workspace.get(YSelector.ofString("/is.yaks.tests/basic"), quorum);
+        String strValue2 = "";
+        try {
+            for (Map.Entry<Path, Value> entry : kvs2.entrySet()) {
+                strValue2 = new String(entry.getValue().getValue().getBytes(), "UTF-8");
+            }
+            kvs2.forEach((k, v) -> System.out.println("Item : [" + k + "] Value : [" + v.getValue().toString() + "]"));
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        Assert.assertTrue(kvs2.isEmpty());
 
     }
 

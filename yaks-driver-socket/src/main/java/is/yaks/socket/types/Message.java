@@ -1,10 +1,11 @@
 package is.yaks.socket.types;
 
 import java.util.Map;
+import java.util.Properties;
 
 import is.yaks.Path;
-import is.yaks.YSelector;
 import is.yaks.Value;
+import is.yaks.YSelector;
 
 public interface Message {
 
@@ -25,6 +26,13 @@ public interface Message {
      * @return
      */
     public Map<Path, Value> getValuesList();
+
+    /**
+     * Returns the message properties
+     * 
+     * @return properties
+     */
+    public Properties getProperties();
 
     /**
      * Returns the message properties
@@ -89,7 +97,14 @@ public interface Message {
      * @param path
      * @param value
      */
-    public void add_value(Path path, Value value);
+    public void add_values(Map<Path, Value> values);
+
+    /**
+     * Get tuples <path, value> from a message
+     * 
+     * @return Map<Path, Value>
+     */
+    public Map<Path, Value> get_values();
 
     /**
      * Add a workspace
