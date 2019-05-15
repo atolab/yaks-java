@@ -15,7 +15,7 @@ import is.yaks.async.AsyncWorkspace;
 import is.yaks.async.AsyncYaks;
 import is.yaks.socket.types.ObserverImpl;
 
-public class AsyncSocketClient {
+public class AsyncSimpleClient {
 
     private static AsyncYaks async_yaks;
     private static AsyncAdmin async_admin;
@@ -25,8 +25,21 @@ public class AsyncSocketClient {
     private static Observer eval_callback;
     private static Observer eval_callback2;
 
+    public void print_admin_space(AsyncWorkspace async_ws) 
+    {
+    	YSelector sel = new YSelector("/@/local/**");
+    	System.out.println("\n------ADMIN SPACE ------");
+    	 Map<Path, Value> kvs = async_ws.get(sel, 0);
+         if (kvs != null) {
+             kvs.forEach((k, v) -> System.out.println(k + " :\n " + v.getValue().toString()));
+         }
+         System.out.println("--------------------\n");
+    }
+    
     public static void main(String[] args) throws IOException, InterruptedException {
 
+    	AsyncSimpleClient client = new AsyncSimpleClient();
+    	
         // creating Yaks api
         System.out.println(">> Creating api");
         async_yaks = AsyncYaksImpl.getInstance();
@@ -61,6 +74,8 @@ public class AsyncSocketClient {
         async_workspace = async_yaks.workspace(Path.ofString("/myyaks"));
         String subid = async_workspace.subscribe(YSelector.ofString("/myyaks/example/**"), observer);
 
+        client.print_admin_space(async_workspace);
+        
         System.out.println(">> Put Tuple 1 - subid: " + subid);
         async_workspace.put(Path.ofString("/myyaks/example/one"), new Value("hello!", Encoding.STRING), quorum);
         // System.out.println("Called OBSERVER : "+listener.toString());
@@ -202,6 +217,8 @@ public class AsyncSocketClient {
             async_workspace.unsubscribe(sid2);
         }
 
+        client.print_admin_space(async_workspace);
+        
         System.out.println(">> Register Eval #1");
         async_workspace.register_eval(Path.ofString("/test_eval"), eval_callback);
 
@@ -245,11 +262,13 @@ public class AsyncSocketClient {
         System.out.println("GET: [" + strKey8 + ", " + strValue8 + "]");
 
         System.out.println(">> Unregister Eval");
-        async_workspace.unregister_eval(Path.ofString("/myyaks/key1"));
+        async_workspace.unregister_eval(Path.ofString("/myyaks/test_eval"));
 
-        System.out.println(">> Dispose Storage");
+        System.out.println(">> Remove Storage");
         async_admin.remove_storage(stid, async_yaks);
 
+        client.print_admin_space(async_workspace);
+        
         System.out.println(">> Close-logout");
         async_yaks.logout();
         System.out.println("bye!");

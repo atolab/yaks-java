@@ -48,7 +48,7 @@ public class LatencyTest {
         put_n(samples, ws, path, val);
         long stop = System.currentTimeMillis();
         long delta = stop - start;
-        System.out.println("Throughput: " + ((double) samples / delta) * 1000 + " msg/sec \n");
+        System.out.println("Throughput: " + ((double) samples / delta) * 1000 + " msg/sec");
     }
 
     public static void main(String[] args) {
