@@ -3,6 +3,8 @@ package is.yaks.socket.qualif;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import is.yaks.Path;
 import is.yaks.Value;
@@ -15,8 +17,8 @@ public class LatencyTest {
     public static int DEFAUL_PORT = 7887;
 
     private static AsyncYaks yaks;
-    private static AsyncWorkspace ws;
-
+    private static AsyncWorkspace ws;   
+    
     public void init(Properties properties) throws InterruptedException, ExecutionException {
         yaks = AsyncYaksImpl.getInstance();
         if (yaks != null) {

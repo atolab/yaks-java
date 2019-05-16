@@ -1,9 +1,9 @@
 package is.yaks.socket.async;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import is.yaks.Path;
 import is.yaks.async.AsyncAdmin;
@@ -14,23 +14,18 @@ public class AsyncYaksImpl implements AsyncYaks {
 
     private AsyncYaksRuntimeImpl async_yaks_rt;
 
+    private ExecutorService executor = Executors.newFixedThreadPool(10);
+    
     public static final long TIMEOUT = 1l; // i.e 5l = 5ms, 1000l = i sec
-
-    // private YaksConfiguration config = YaksConfiguration.getInstance();
-
-    private static AsyncYaksImpl async_yaks;
 
     private AsyncAdminImpl async_admin;
     private AsyncWorkspace async_workspace;
-
-    private Map<String, AsyncAdmin> adminById = new HashMap<String, AsyncAdmin>();
-    private Map<String, AsyncWorkspace> workspaceById = new HashMap<String, AsyncWorkspace>();
+    private static AsyncYaksImpl async_yaks;
 
     public AsyncYaksImpl() {
         async_yaks_rt = AsyncYaksRuntimeImpl.getInstance();
     }
 
-    // no modifier, only visible in class and package
     public AsyncYaksImpl(AsyncYaksImpl yaks) {
         async_yaks_rt = AsyncYaksRuntimeImpl.getInstance();
     }
@@ -42,21 +37,21 @@ public class AsyncYaksImpl implements AsyncYaks {
         return async_yaks;
     }
 
-    private AsyncYaksImpl(String... args) {
-        if (args.length == 0) {
-            // logger.error("Usage: <yaksUrl>");
-            System.exit(-1);
-        }
-        String yaksUrl = args[0];
-        if (yaksUrl.isEmpty()) {
-            System.exit(-1);
-        }
-    }
-
     @Override
     public AsyncYaks login(Properties properties) {
-        async_yaks = (AsyncYaksImpl) async_yaks_rt.create(properties);
+        
+    	async_yaks = (AsyncYaksImpl) async_yaks_rt.create(properties);
+
+    	System.out.println("[async_yaks_impl] Init receivers_loop() in yaks_runtime ... ");
+    	executor.execute(async_yaks_rt);
+    	
         async_yaks_rt.process_login(properties);
+        
+//      Runnable worker = new AsyncYaksRuntimeImpl("");
+        
+//      Thread thr1 = new Thread(async_yaks_rt, "Init async_yaks_rt");
+//      thr1.start();
+
         return async_yaks;
     }
 

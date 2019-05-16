@@ -14,8 +14,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import is.yaks.Encoding;
 import is.yaks.Observer;
@@ -34,8 +32,6 @@ import is.yaks.socket.utils.Utils;
 import is.yaks.socket.utils.VLEEncoder;
 
 public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
-
-    private ExecutorService executorService = Executors.newFixedThreadPool(4);
 
     int vle_bytes = 10;
 
@@ -59,19 +55,24 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
 
     private Map<Path, Value> kvs;
 
-    private AsyncYaksRuntimeImpl() {
+    private String command;
+    
+    public AsyncYaksRuntimeImpl(String s) {
+    	this.command = s;
     }
 
     public static synchronized AsyncYaksRuntimeImpl getInstance() {
         if (async_yaks_rt == null) {
-            async_yaks_rt = new AsyncYaksRuntimeImpl();
+            async_yaks_rt = new AsyncYaksRuntimeImpl("");
         }
         return async_yaks_rt;
     }
 
     @Override
     public void run() {
-        receiver_loop(async_yaks);
+    	System.out.println(Thread.currentThread().getName()+" Start. Receiver_loop = "+command);
+    	receiver_loop(async_yaks);
+    	System.out.println(Thread.currentThread().getName()+" End.");
     }
 
     public boolean receiver_loop(AsyncYaks async_yaks) {
@@ -309,16 +310,22 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
     }
 
     @Override
-    public void process_login(Properties properties) {
-        Message loginM = new MessageFactory().getMessage(MessageCode.LOGIN, properties);
-        CompletableFuture<Message> login_future = new CompletableFuture<Message>();
-        async_yaks_rt.write(socket, loginM);
-        workingFutureMap.put(loginM.getCorrelationID(), login_future);
-
-        System.out.println("[async_yaks_rt] Init receivers_loop in yaks_runtime ... ");
-        Thread thr1 = new Thread(async_yaks_rt, "Init async_yaks_rt");
-        thr1.start();
-
+    public boolean process_login(Properties properties) {
+    	boolean is_login_ok = true;
+    	Message loginM = new MessageFactory().getMessage(MessageCode.LOGIN, properties);
+    	CompletableFuture<Message> login_future = new CompletableFuture<Message>();
+    	async_yaks_rt.write(socket, loginM);
+    	workingFutureMap.put(loginM.getCorrelationID(), login_future);
+    	try {
+    		Message msg = login_future.get();
+    		if (msg != null)
+    			is_login_ok = true;
+    	} catch (InterruptedException e) {
+    		e.printStackTrace();
+    	} catch (ExecutionException e) {
+    		e.printStackTrace();
+    	}
+    	return is_login_ok;
     }
 
     @Override
@@ -334,9 +341,8 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
                 workingFutureMap.put(workspaceM.getCorrelationID(), ws_future);
             }
         }
-        Message msg;
         try {
-            msg = ws_future.get();
+        	Message msg = ws_future.get();
             Map<String, String> map = msg.getPropertiesList();
             if (!map.isEmpty()) {
                 wsid = Integer.parseInt(map.get("wsid"));
@@ -603,8 +609,9 @@ public class AsyncYaksRuntimeImpl implements AsyncYaksRuntime, Runnable {
     }
 
     @Override
-    public void process_logout(AsyncYaks async_yaks) {
-
+    public boolean process_logout(AsyncYaks async_yaks) {
+    	//TODO
+    	return true;
     }
 
     @Override

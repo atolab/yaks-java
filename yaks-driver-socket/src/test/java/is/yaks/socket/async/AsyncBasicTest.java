@@ -110,6 +110,7 @@ public class AsyncBasicTest {
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
+        System.out.println("Get #2: ["+strValue2+"]");
         Assert.assertTrue(kvs2.isEmpty());
 
     }

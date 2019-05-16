@@ -16,9 +16,9 @@ public interface AsyncYaksRuntime {
 
     public void destroy(AsyncYaks yaks);
 
-    public void process_login(Properties properties);
+    public boolean process_login(Properties properties);
 
-    public void process_logout(AsyncYaks yaks);
+    public boolean process_logout(AsyncYaks yaks);
 
     public AsyncWorkspace process_workspace(Path path);
 
