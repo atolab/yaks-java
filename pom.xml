@@ -17,65 +17,65 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
 
-	<parent>
-		<groupId>is.yaks</groupId>
-		<artifactId>parent-pom</artifactId>
-		<relativePath>parent-pom</relativePath>
-		<version>0.3.0-SNAPSHOT</version>
-	</parent>
+  <parent>
+    <groupId>is.yaks</groupId>
+    <artifactId>parent-pom</artifactId>
+    <relativePath>parent-pom</relativePath>
+    <version>0.3.0-SNAPSHOT</version>
+  </parent>
 
-	<artifactId>yaks-java</artifactId>
-	<packaging>pom</packaging>
-	
-	<name>yaks-java</name>
-	<description>Yaks-java build POM</description>
-	<url>http://yaks.is</url>
+  <artifactId>yaks-java</artifactId>
+  <packaging>pom</packaging>
 
-	<licenses>
-		<license>
-			<name>Apache-2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0</url>
-		</license>
-	</licenses>
+  <name>yaks-java</name>
+  <description>Yaks-java build POM</description>
+  <url>http://yaks.is</url>
 
-	<scm>
-		<url>https://github.com/atolab/yaks-java</url>
-		<connection>scm:git:git://github.com/atolab/yaks-java.git</connection>
-		<developerConnection>scm:git:git@github.com:atolab/yaks-java.git</developerConnection>
-	</scm>
+  <licenses>
+    <license>
+      <name>Apache-2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+    </license>
+  </licenses>
 
-	<organization>
-		<name>ADLINK Technology</name>
-		<url>https://www.adlinktech.com/</url>
-	</organization>
+  <scm>
+    <url>https://github.com/atolab/yaks-java</url>
+    <connection>scm:git:git://github.com/atolab/yaks-java.git</connection>
+    <developerConnection>scm:git:git@github.com:atolab/yaks-java.git</developerConnection>
+  </scm>
+
+  <organization>
+    <name>ADLINK Technology</name>
+    <url>https://www.adlinktech.com/</url>
+  </organization>
 
   <developers>
-      <developer>
-          <name>Angelo Corsaro</name>
-          <email>angelo.corsaro@adlinktech.com</email>
-          <organization>ADLINK Technology</organization>
-      </developer>
-      <developer>
-          <name>Julien Enoch</name>
-          <email>julien.enoch@adlinktech.com</email>
-          <organization>ADLINK Technology</organization>
-      </developer>
-      <developer>
-          <name>Olivier Hecart</name>
-          <email>olivier.hecart@adlinktech.com</email>
-          <organization>ADLINK Technology</organization>
-      </developer>
+    <developer>
+      <name>Angelo Corsaro</name>
+      <email>angelo.corsaro@adlinktech.com</email>
+      <organization>ADLINK Technology</organization>
+    </developer>
+    <developer>
+      <name>Julien Enoch</name>
+      <email>julien.enoch@adlinktech.com</email>
+      <organization>ADLINK Technology</organization>
+    </developer>
+    <developer>
+      <name>Olivier Hecart</name>
+      <email>olivier.hecart@adlinktech.com</email>
+      <organization>ADLINK Technology</organization>
+    </developer>
   </developers>
 
-	<modules>
+  <modules>
     <module>parent-pom</module>
-		<module>yaks</module>                
-		<module>examples</module>
-	</modules>
+    <module>yaks</module>
+    <module>examples</module>
+    <module>assembly</module>
+  </modules>
 </project>

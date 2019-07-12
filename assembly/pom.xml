@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>is.yaks</groupId>
+      <artifactId>parent-pom</artifactId>
+      <relativePath>parent-pom</relativePath>
+      <version>0.3.0-SNAPSHOT</version>
+   </parent>
+
+   <artifactId>assembly</artifactId>
+   <packaging>pom</packaging>
+
+   <name>assembly</name>
+   <description>Assembly POM for yaks-java</description>
+
+
+   <properties>
+      <!-- This is a trick to escape some variables from filtering: -->
+      <!--      ${dollar}{XYZ} is filtered as ${XYZ}                -->
+      <dollar>$</dollar>
+      <yaks-version>${project.version}</yaks-version>
+      <install-plugin-version>2.4</install-plugin-version>
+   </properties>
+
+
+   <build>
+      <plugins>
+         <!-- Maven : assembly plugin -->
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <executions>
+
+               <!-- Release package -->
+               <execution>
+                  <id>Create release package: ${assembly-name}</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>single</goal>
+                  </goals>
+                  <configuration>
+                     <finalName>Yaks-java-${project.version}</finalName>
+                     <appendAssemblyId>false</appendAssemblyId>
+                     <descriptors>
+                        <descriptor>/src/main/assembly/yaks-assembly.xml</descriptor>
+                     </descriptors>
+                     <!-- force directories to have 755 mode (strange behavior if not forced) -->
+                     <archiverConfig>
+                        <directoryMode>493</directoryMode>
+                        <defaultDirectoryMode>493</defaultDirectoryMode>
+                     </archiverConfig>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+      </plugins>
+   </build>
+
+</project>
