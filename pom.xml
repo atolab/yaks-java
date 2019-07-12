@@ -1,37 +1,81 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one or more
+    contributor license agreements.  See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License.  You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+    
+	Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>is.yaks</groupId>
-	<artifactId>yaks</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<packaging>pom</packaging>
 
 	<parent>
 		<groupId>is.yaks</groupId>
 		<artifactId>parent-pom</artifactId>
 		<relativePath>parent-pom</relativePath>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>0.3.0-SNAPSHOT</version>
 	</parent>
 
-	<name>Yaks</name>
-	<description>This is a POM with recommended dependencies for Java Yaks API</description>
+	<artifactId>yaks-java</artifactId>
+	<packaging>pom</packaging>
+	
+	<name>yaks-java</name>
+	<description>Yaks-java build POM</description>
+	<url>http://yaks.is</url>
 
-	<profiles>
-		<profile>
-			<id>development</id>
-			<activation>
-				<property>
-					<name>!prepare-release</name>
-				</property>
-			</activation>
-			<modules>
-				<module>parent-pom</module>
-				<module>yaks-api</module>                
-				<module>yaks-driver-socket</module>
-			</modules>
-		</profile>
-	</profiles>
+	<licenses>
+		<license>
+			<name>Apache-2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0</url>
+		</license>
+	</licenses>
+
+	<scm>
+		<url>https://github.com/atolab/yaks-java</url>
+		<connection>scm:git:git://github.com/atolab/yaks-java.git</connection>
+		<developerConnection>scm:git:git@github.com:atolab/yaks-java.git</developerConnection>
+	</scm>
+
+	<organization>
+		<name>ADLINK Technology</name>
+		<url>https://www.adlinktech.com/</url>
+	</organization>
+
+  <developers>
+      <developer>
+          <name>Angelo Corsaro</name>
+          <email>angelo.corsaro@adlinktech.com</email>
+          <organization>ADLINK Technology</organization>
+      </developer>
+      <developer>
+          <name>Julien Enoch</name>
+          <email>julien.enoch@adlinktech.com</email>
+          <organization>ADLINK Technology</organization>
+      </developer>
+      <developer>
+          <name>Olivier Hecart</name>
+          <email>olivier.hecart@adlinktech.com</email>
+          <organization>ADLINK Technology</organization>
+      </developer>
+  </developers>
+
+	<modules>
+    <module>parent-pom</module>
+		<module>yaks</module>                
+		<module>examples</module>
+	</modules>
 </project>
