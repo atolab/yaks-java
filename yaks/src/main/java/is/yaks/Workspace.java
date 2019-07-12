@@ -14,11 +14,6 @@ import java.nio.ByteBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * 
- * 
- *
- */
 public class Workspace {
 
     private static final Logger LOG = LoggerFactory.getLogger("is.yaks");
@@ -54,12 +49,13 @@ public class Workspace {
             return s;
         }
     }
+
     public void put(Path path, Value value) throws YException {
         path = toAsbsolutePath(path);
         LOG.debug("Put on {} of {}", path, value);
         try {
             ByteBuffer data = value.encode();
-            zenoh.writeData(path.toString(), data, value.getEncoding(), KIND_PUT);
+            zenoh.writeData(path.toString(), data, value.getEncoding().getFlag(), KIND_PUT);
         } catch (ZException e) {
             throw new YException("Put on "+path+" failed", e);
         }
@@ -70,7 +66,7 @@ public class Workspace {
         LOG.debug("Update on {} of {}", path, value);
         try {
             ByteBuffer data = value.encode();
-            zenoh.writeData(path.toString(), data, value.getEncoding(), KIND_UPDATE);
+            zenoh.writeData(path.toString(), data, value.getEncoding().getFlag(), KIND_UPDATE);
         } catch (ZException e) {
             throw new YException("Update on "+path+" failed", e);
         }
@@ -87,29 +83,34 @@ public class Workspace {
     }
 
     public Collection<PathValue> get(Selector selector) throws YException {
-        selector = toAsbsoluteSelector(selector);
-        LOG.debug("Get on {}", selector);
+        final Selector s = toAsbsoluteSelector(selector);
+        LOG.debug("Get on {}", s);
         try {
             final Collection<PathValue> results = new LinkedList<PathValue>();
             final java.util.concurrent.atomic.AtomicBoolean queryFinished =
                 new java.util.concurrent.atomic.AtomicBoolean(false);
             
-            zenoh.query(selector.getPath(), selector.getOptionalPart(),
+            zenoh.query(s.getPath(), s.getOptionalPart(),
                 new ReplyCallback() {
                     public void handle(ReplyValue reply) {
                         switch (reply.getKind()) {
                             case Z_STORAGE_DATA:
                                 Path path = new Path(reply.getRname());
                                 ByteBuffer data = reply.getData();
-                                LOG.trace("Get on {} => Z_STORAGE_DATA {} : {}", path, data);
-                                // TODO: encoding
-                                results.add(new PathValue(path, StringValue.Decoder.decode(data)));
+                                LOG.trace("Get on {} => Z_STORAGE_DATA {} : {}", s, data);
+                                short encodingFlag = (short) reply.getInfo().getEncoding();
+                                try {
+                                    Value value = Encoding.fromFlag(encodingFlag).getDecoder().decode(data);
+                                    results.add(new PathValue(path, value));
+                                } catch (YException e) {
+                                    LOG.warn("Eval on {}: error decoding reply {} : {}", s, reply.getRname(), e);
+                                }
                                 break;
                             case Z_STORAGE_FINAL:
-                                LOG.trace("Get on {} => Z_STORAGE_FINAL");
+                                LOG.trace("Get on {} => Z_STORAGE_FINAL", s);
                                 break;
                             case Z_REPLY_FINAL:
-                                LOG.trace("Get on {} => Z_REPLY_FINAL => {} values received", results.size());
+                                LOG.trace("Get on {} => Z_REPLY_FINAL => {} values received", s, results.size());
                                 synchronized (results) {
                                     queryFinished.set(true);
                                     results.notify();
@@ -138,27 +139,35 @@ public class Workspace {
 
 
     public SubscriptionId subscribe(Selector selector, Listener listener) throws YException {
-        final Selector sel = toAsbsoluteSelector(selector);
+        final Selector s = toAsbsoluteSelector(selector);
         LOG.debug("subscribe on {}", selector);
         try {
-            Subscriber sub = zenoh.declareSubscriber(sel.getPath(), SubMode.push(),
+            Subscriber sub = zenoh.declareSubscriber(s.getPath(), SubMode.push(),
                 new SubscriberCallback() {
                     public void handle(String rname, ByteBuffer data, DataInfo info) {
-                        LOG.debug("subscribe on {} : received notif for {} (kind:{})", sel, rname, info.getKind());
+                        LOG.debug("subscribe on {} : received notif for {} (kind:{})", s, rname, info.getKind());
                         try {
+                            // TODO: list of more than 1 change when available in zenoh-c
+                            List<Change> changes = new ArrayList<Change>(1);
+
                             Path path = new Path(rname);
                             Change.Kind kind = Change.Kind.fromInt(info.getKind());
+                            short encodingFlag = (short) info.getEncoding();
                             // TODO: timestamp when available in zenoh-c
                             long time = 0L;
-                            // TODO: encoding
-                            Value value = (kind == Change.Kind.REMOVE ? null : StringValue.Decoder.decode(data));
-                            Change change = new Change(path, kind, time, value);
-                            // TODO: list of changes when available in zenoh-c
-                            List<Change> changes = new ArrayList<Change>(1);
-                            changes.add(change);
+                            try {
+                                Value value = null;
+                                if (kind != Change.Kind.REMOVE) {
+                                    value = Encoding.fromFlag(encodingFlag).getDecoder().decode(data);
+                                }
+                                Change change = new Change(path, kind, time, value);
+                                changes.add(change);
+                            } catch (YException e) {
+                                LOG.warn("subscribe on {}: error decoding change for {} : {}", s, rname, e);
+                            }
                             listener.onChanges(changes);
                         } catch (Throwable e) {
-                            LOG.warn("subscribe on {} : error receiving notification for {} : {}", sel, rname, e);
+                            LOG.warn("subscribe on {} : error receiving notification for {} : {}", s, rname, e);
                             LOG.debug("Stack trace: ", e);
                         }
                     }
@@ -200,7 +209,7 @@ public class Workspace {
                         Value v = eval.callback(path, predicateToProperties(s.getProperties()));
                         LOG.debug("Registered eval on {} return value: {}", p, v);
                         return new Resource[]{
-                            new Resource(path.toString(), v.encode(), v.getEncoding(), Change.Kind.PUT.value())
+                            new Resource(path.toString(), v.encode(), v.getEncoding().getFlag(), Change.Kind.PUT.value())
                         };
                     } catch (Throwable e) {
                         LOG.warn("Registered eval on {} caught an exception while handling query {} {} : {}", p, rname, predicate, e);
@@ -242,29 +251,34 @@ public class Workspace {
      * transcoding of a value fails.
      */
     public Collection<PathValue> eval(Selector selector) throws YException {
-        selector = toAsbsoluteSelector(selector);
-        LOG.debug("Eval on {}", selector);
+        final Selector s = toAsbsoluteSelector(selector);
+        LOG.debug("Eval on {}", s);
         try {
             final Collection<PathValue> results = new LinkedList<PathValue>();
             final java.util.concurrent.atomic.AtomicBoolean queryFinished =
                 new java.util.concurrent.atomic.AtomicBoolean(false);
             
-            zenoh.query(ZENOH_EVAL_PREFIX+selector.getPath(), selector.getOptionalPart(),
+            zenoh.query(ZENOH_EVAL_PREFIX+s.getPath(), s.getOptionalPart(),
                 new ReplyCallback() {
                     public void handle(ReplyValue reply) {
                         switch (reply.getKind()) {
                             case Z_STORAGE_DATA:
                                 Path path = new Path(reply.getRname());
                                 ByteBuffer data = reply.getData();
-                                LOG.trace("Eval on {} => Z_STORAGE_DATA {} : {}", path, data);
-                                // TODO: encoding
-                                results.add(new PathValue(path, StringValue.Decoder.decode(data)));
+                                LOG.trace("Eval on {} => Z_STORAGE_DATA {} : {}", s, data);
+                                short encodingFlag = (short) reply.getInfo().getEncoding();
+                                try {
+                                    Value value = Encoding.fromFlag(encodingFlag).getDecoder().decode(data);
+                                    results.add(new PathValue(path, value));
+                                } catch (YException e) {
+                                    LOG.warn("Eval on {}: error decoding reply {} : {}", s, reply.getRname(), e);
+                                }
                                 break;
                             case Z_STORAGE_FINAL:
-                                LOG.trace("Eval on {} => Z_STORAGE_FINAL");
+                                LOG.trace("Eval on {} => Z_STORAGE_FINAL", s);
                                 break;
                             case Z_REPLY_FINAL:
-                                LOG.trace("Eval on {} => Z_REPLY_FINAL => {} values received", results.size());
+                                LOG.trace("Eval on {} => Z_REPLY_FINAL => {} values received", s, results.size());
                                 synchronized (results) {
                                     queryFinished.set(true);
                                     results.notify();
@@ -305,6 +319,5 @@ public class Workspace {
         }
         return result;
     }
-
 
 }

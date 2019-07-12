@@ -2,37 +2,44 @@ package is.yaks;
 
 public enum Encoding {
 
-    RAW((short) 0x01),
-    STRING((short) 0x02),
-    PROPERTIES((short) 0x03),
-    JSON((short) 0x04),
-    SQL((short) 0x05);
+    RAW (RawValue.Decoder.getEncodingFlag(), RawValue.Decoder),
+    STRING (StringValue.Decoder.getEncodingFlag(), StringValue.Decoder),
+    PROPERTIES (PropertiesValue.Decoder.getEncodingFlag(), PropertiesValue.Decoder);
+    // JSON((short) 0x04),
+    // SQL((short) 0x05);
 
-    private short numVal;
+    private short flag;
+    private Value.Decoder decoder;
 
-    private Encoding(short numVal) {
-        this.numVal = numVal;
+    private Encoding(short flag, Value.Decoder decoder) {
+        this.flag = flag;
+        this.decoder = decoder;
     }
 
-    public short value() {
-        return numVal;
+    public short getFlag() {
+        return flag;
     }
 
-    protected static Encoding fromShort(short numVal) throws YException {
-        if (numVal == RAW.value()) {
+    public Value.Decoder getDecoder() {
+        return decoder;
+    }
+
+
+    protected static Encoding fromFlag(short flag) throws YException {
+        if (flag == RAW.getFlag()) {
             return RAW;
         }
-        else if (numVal == STRING.value()) {
+        else if (flag == STRING.getFlag()) {
             return STRING;
         }
-        else if (numVal == PROPERTIES.value()) {
+        else if (flag == PROPERTIES.getFlag()) {
             return PROPERTIES;
         }
-        else if (numVal == JSON.value()) {
-            return JSON;
-        }
+        // else if (flag == JSON.flag()) {
+        //     return JSON;
+        // }
         else {
-            throw new YException("Unkown encoding value: "+numVal);
+            throw new YException("Unkown encoding flag: "+flag);
         }
     }
 

@@ -1,18 +1,16 @@
 package is.yaks;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Properties;
+import java.util.Map;
+import java.util.Hashtable;
 
 import is.yaks.Path;
 import is.yaks.Value;
 import is.yaks.Workspace;
 import is.yaks.Yaks;
 
-/**
- * 
- * Admin module for YAKS
- * 
- */
+
 public class Admin {
 
     private Workspace w;
@@ -23,57 +21,132 @@ public class Admin {
         this.yaksid = yaksid;
     }
 
-    /**
-     * Not supported in this version.
-     * 
-     */
-    // public boolean add_backend(String beid, Properties properties, Yaks yaks);
+    private Properties propertiesOfValue(Value v) {
+        if (v instanceof PropertiesValue) {
+            return ((PropertiesValue) v).getProperties();
+        } else {
+            Properties p = new Properties();
+            p.setProperty("value", v.toString());
+            return p;
+        }
+    }
 
-    /**
-     * Gets the back-end with id **beid** on the Yaks instance with UUID **yaks**.
-     * 
-     */
-    // public Value get_backend(Yaks yaks);
+    /************* Backends management *************/
 
-    /**
-     * Gets the list of all available back-ends on the Yaks instance with UUID **yaks**.
-     * 
-     */
-    // public List<Value> get_backends(String beid, Yaks yaks);
+    public void addBackend(String beid, Properties properties) throws YException {
+        addBackend(beid, properties, yaksid);
+    }
 
-    /**
-     * Not supported in this version.
-     * 
-     */
-    // public void remove_backend(String beid, Yaks yaks);
+    public void addBackend(String beid, Properties properties, String yaks) throws YException {
+        String path = String.format("/@/%s/backend/%s", yaks, beid);
+        w.put(new Path(path), new PropertiesValue(properties));
+    }
 
-    /**
-     * Adds a storage named **stid** on the backend **beid** and with storage and back-end specific configuration
-     * defined through **properties**. The **properties** should always include the selector, e.g.,
-     * *{"selector":"/demo/astore/**"}*. Main memory is the default backend used when **beid** is unset.
-     * 
-     * Finally, the storage is created on the Yaks instance with UUID **yaks**.
-     * 
-     * @return is_reply_ok
-     */
-    // public void add_storage(String stid, Properties properties, String beid, Yaks yaks);
+    public Properties getBackend(String beid) throws YException {
+        return getBackend(beid, yaksid);
+    }
 
-    /**
-     * Gets the storage with id **stid** on the Yaks instance with UUID **yaks**.
-     * 
-     */
-    // public Value get_storage(String stid, Yaks yaks);
+    public Properties getBackend(String beid, String yaks) throws YException {
+        String sel = String.format("/@/%s/backend/%s", yaks, beid);
+        Collection<PathValue> pvs = w.get(new Selector(sel));
+        if (! pvs.iterator().hasNext()) {
+            return null;
+        } else {
+            return propertiesOfValue(pvs.iterator().next().getValue());
+        }
+    }
 
-    /**
-     * Gets the list of all available storages on the Yaks instance with UUID **yaks**.
-     * 
-     */
-    // public List<Value> get_storages(String beid, Yaks yaks);
+    public Map<String, Properties> getBackends() throws YException {
+        return getBackends(yaksid);
+    }
 
-    /**
-     * Removes the storage with id **stid** on the Yaks instance with UUID **yaks**.
-     * 
-     */
-    // public boolean remove_storage(String stid, Yaks yaks);
+    public Map<String, Properties> getBackends(String yaks) throws YException {
+        String sel = String.format("/@/%s/backend/*", yaks);
+        Collection<PathValue> pvs = w.get(new Selector(sel));
+        Map<String, Properties> result = new Hashtable<String, Properties>(pvs.size());
+        for (PathValue pv : pvs) {
+            String beid = pv.getPath().toString().substring(sel.length()-1);
+            result.put(beid, propertiesOfValue(pv.getValue()));
+        }
+        return result;
+    }
+
+    public void removeBackend(String beid) throws YException {
+        removeBackend(beid, yaksid);
+    }
+
+    public void removeBackend(String beid, String yaks) throws YException {
+        String path = String.format("/@/%s/backend/%s", yaks, beid);
+        w.remove(new Path(path));
+    }
+
+    /************* Storages management *************/
+
+    public void addStorage(String stid, Properties properties) throws YException {
+        addStorageOnBackend(stid, properties, "auto", yaksid);
+    }
+
+    public void addStorage(String stid, Properties properties, String yaks) throws YException {
+        addStorageOnBackend(stid, properties, "auto", yaks);
+    }
+
+    public void addStorageOnBackend(String stid, Properties properties, String backend) throws YException {
+        addStorageOnBackend(stid, properties, backend, yaksid);
+    }
+    public void addStorageOnBackend(String stid, Properties properties, String backend, String yaks) throws YException {
+        String path = String.format("/@/%s/backend/%s/storage/%s", yaks, backend, stid);
+        w.put(new Path(path), new PropertiesValue(properties));
+    }
+
+    public Properties getStorage(String stid) throws YException {
+        return getStorage(stid, yaksid);
+    }
+
+    public Properties getStorage(String stid, String yaks) throws YException {
+        String sel = String.format("/@/%s/backend/*/storage/%s", yaks, stid);
+        Collection<PathValue> pvs = w.get(new Selector(sel));
+        if (! pvs.iterator().hasNext()) {
+            return null;
+        } else {
+            return propertiesOfValue(pvs.iterator().next().getValue());
+        }
+    }
+
+    public Map<String, Properties> getStorages() throws YException {
+        return getStoragesFromBackend("*", yaksid);
+    }
+
+    public Map<String, Properties> getStorages(String yaks) throws YException {
+        return getStoragesFromBackend("*", yaks);
+    }
+
+    public Map<String, Properties> getStoragesFromBackend(String backend) throws YException {
+        return getStoragesFromBackend(backend, yaksid);
+    }
+
+    public Map<String, Properties> getStoragesFromBackend(String backend, String yaks) throws YException {
+        String sel = String.format("/@/%s/backend/%s/storage/*", yaks, backend);
+        Collection<PathValue> pvs = w.get(new Selector(sel));
+        Map<String, Properties> result = new Hashtable<String, Properties>(pvs.size());
+        for (PathValue pv : pvs) {
+            String stPath = pv.getPath().toString();
+            String stid = stPath.substring(stPath.lastIndexOf('/')+1);
+            result.put(stid, propertiesOfValue(pv.getValue()));
+        }
+        return result;
+    }
+
+    public void removeStorage(String stid) throws YException {
+        removeStorage(stid, yaksid);
+    }
+
+    public void removeStorage(String stid, String yaks) throws YException {
+        String sel = String.format("/@/%s/backend/*/storage/%s", yaks, stid);
+        Collection<PathValue> pvs = w.get(new Selector(sel));
+        if (pvs.iterator().hasNext()) {
+            Path p = pvs.iterator().next().getPath();
+            w.remove(p);
+        }
+    }
 
 }

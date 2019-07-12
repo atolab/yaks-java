@@ -4,6 +4,8 @@ import java.nio.ByteBuffer;
 
 public class RawValue implements Value {
 
+    private static final short ENCODING_FLAG = 0x00;
+
     private ByteBuffer buf;
 
 
@@ -11,19 +13,28 @@ public class RawValue implements Value {
         this.buf = buf;
     }
 
-    public short getEncoding() {
-        return 0x00;
+    public ByteBuffer getBuffer() {
+        return buf;
+    }
+
+    public Encoding getEncoding() {
+        return Encoding.RAW;
     }
 
     public ByteBuffer encode() {
         return buf;
     }
 
+    @Override
     public String toString() {
         return buf.toString();
     }
 
     public static final Value.Decoder Decoder = new Value.Decoder() {
+        public short getEncodingFlag() {
+            return ENCODING_FLAG;
+        }
+
         public Value decode(ByteBuffer buf) {
             return new RawValue(buf);
         }
