@@ -27,6 +27,16 @@ public class Yaks {
     }
 
 
+    private static Yaks initYaks(Zenoh z) throws YException {
+        Properties props = z.info();
+        String yaksid = props.getProperty("peer_pid");
+        if (yaksid == null) {
+            throw new YException("Failed to retrieve YaksId from Zenoh info");
+        }
+        LOG.info("Connected to Yaks {}", yaksid);
+        return new Yaks(z, yaksid);
+    }
+
     /**
      * Establish a session with the Yaks instance reachable through the provided *locator*.
      * 
@@ -34,17 +44,28 @@ public class Yaks {
      */
     public static Yaks login(String locator, Properties properties) throws YException {
         try {
-            LOG.debug("Connecting to Zenoh on {}", locator);
+            LOG.debug("Connecting to Yaks via Zenoh on {}", locator);
             Zenoh z = Zenoh.open(locator);
-
-            // TODO: get Zenoh peer_pid
-            return new Yaks(z, "00000000-0000-0000-0000-000000000000");
+            return initYaks(z);
 
         } catch (ZException e) {
-            LOG.warn("Connection to Zenoh on {} failed", locator, e);
+            LOG.warn("Connection Yaks via Zenoh on {} failed", locator, e);
             throw new YException("Login failed to "+locator, e);
         }
     }
+
+    public static Yaks login(String locator, String username, String password) throws YException {
+        try {
+            LOG.debug("Connecting to Yaks via Zenoh on {} with username: {}", locator, username);
+            Zenoh z = Zenoh.open(locator, username, password);
+            return initYaks(z);
+
+        } catch (ZException e) {
+            LOG.warn("Connection Yaks via Zenoh on {} failed", locator, e);
+            throw new YException("Login failed to "+locator, e);
+        }
+    }
+
 
     /**
      * Terminates this session.
