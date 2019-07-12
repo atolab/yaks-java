@@ -34,6 +34,7 @@ public class YPut {
             System.out.println("Put on "+p+" : "+v);
             w.put(p, v);
 
+            y.logout();
         } catch (Throwable e) {
             e.printStackTrace();
         }

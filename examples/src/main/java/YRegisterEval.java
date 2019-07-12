@@ -36,6 +36,7 @@ public class YRegisterEval {
 
             Thread.sleep(60000);
 
+            y.logout();
         } catch (Throwable e) {
             e.printStackTrace();
         }
