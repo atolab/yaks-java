@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import io.zenoh.*;
 
 /**
- * Yaks API.
+ * The Yaks client API.
  */
 public class Yaks {
 
@@ -38,9 +38,13 @@ public class Yaks {
     }
 
     /**
-     * Establish a session with the Yaks instance reachable through the provided *locator*.
+     * Establish a session with the Yaks instance reachable via provided Zenoh locator.
+     * The locator must have the format: tcp/<ip>:<port> .
      * 
-     * Valid format for the locator are valid IP addresses as well as the combination IP:PORT.
+     * @param locator the Zenoh locator.
+     * @param properties unused in this version (can be null).
+     * @return a Yaks object.
+     * @throws YException if login fails.
      */
     public static Yaks login(String locator, Properties properties) throws YException {
         try {
@@ -54,6 +58,17 @@ public class Yaks {
         }
     }
 
+    /**
+     * Establish a session with the Yaks instance reachable via provided Zenoh locator
+     * and using the specified user name and password.
+     * The locator must have the format: tcp/<ip>:<port> .
+     * 
+     * @param locator the Zenoh locator.
+     * @param username the user name.
+     * @param password the password.
+     * @return a Yaks object.
+     * @throws YException if login fails.
+     */
     public static Yaks login(String locator, String username, String password) throws YException {
         try {
             LOG.debug("Connecting to Yaks via Zenoh on {} with username: {}", locator, username);
@@ -68,7 +83,7 @@ public class Yaks {
 
 
     /**
-     * Terminates this session.
+     * Terminates the session with Yaks.
      */
     public void logout() throws YException {
         try {
@@ -80,16 +95,18 @@ public class Yaks {
     }
 
     /**
-     * Creates a workspace relative to the provided **path**. Any *put* or *get* operation with relative paths on this
-     * workspace will be prepended with the workspace *path*.
-     * 
+     * Creates a Workspace using the provided path.
+     * All relative {@link Selector} or {@Path} used with this Workspace will be relative to this path.
+     *
+     * @param path the Workspace's path.
+     * @return a Workspace.
      */
     public Workspace workspace(Path path) {
         return new Workspace(path, zenoh);
     }
 
     /**
-     * Creates an admin workspace that provides helper operations to administer Yaks.
+     * Returns the Admin object.
      */
     public Admin admin() {
         return admin;

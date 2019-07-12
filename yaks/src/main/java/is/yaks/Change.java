@@ -1,5 +1,9 @@
 package is.yaks;
 
+/**
+ * The notification of a change for a path/value in Yaks.
+ * See {@link Listener}.
+ */
 public class Change {
 
     public enum Kind {

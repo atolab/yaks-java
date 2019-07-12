@@ -14,6 +14,9 @@ import java.nio.ByteBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A Workspace to operate on Yaks.
+ */
 public class Workspace {
 
     private static final Logger LOG = LoggerFactory.getLogger("is.yaks");
@@ -50,6 +53,13 @@ public class Workspace {
         }
     }
 
+    /**
+     * Put a path/value into Yaks.
+     * 
+     * @param path the Path
+     * @param value the value
+     * @throws YException if put failed.
+     */
     public void put(Path path, Value value) throws YException {
         path = toAsbsolutePath(path);
         LOG.debug("Put on {} of {}", path, value);
@@ -61,6 +71,13 @@ public class Workspace {
         }
     }
 
+    /**
+     * Update a path/value into Yaks.
+     * 
+     * @param path the Path
+     * @param value a delta to be applied on the existing value.
+     * @throws YException if update failed.
+     */
     public void update(Path path, Value value) throws YException {
         path = toAsbsolutePath(path);
         LOG.debug("Update on {} of {}", path, value);
@@ -72,6 +89,12 @@ public class Workspace {
         }
     }
 
+    /**
+     * Remove a path/value from Yaks.
+     * 
+     * @param path the Path to be removed
+     * @throws YException if remove failed.
+     */
     public void remove(Path path) throws YException {
         path = toAsbsolutePath(path);
         LOG.debug("Remove on {}", path);
@@ -82,6 +105,13 @@ public class Workspace {
         }
     }
 
+    /**
+     * Get a selection of path/value from Yaks.
+     * 
+     * @param selector the selector expressing the selection.
+     * @return a collection of path/value.
+     * @throws YException if get failed.
+     */
     public Collection<PathValue> get(Selector selector) throws YException {
         final Selector s = toAsbsoluteSelector(selector);
         LOG.debug("Get on {}", s);
@@ -138,6 +168,14 @@ public class Workspace {
     }
 
 
+    /**
+     * Subscribe to a selection of path/value from Yaks.
+     * 
+     * @param selector the selector expressing the selection.
+     * @param listener the Listener that will be called for each change of a path/value matching the selection.
+     * @return a subscription id.
+     * @throws YException if subscribe failed.
+     */
     public SubscriptionId subscribe(Selector selector, Listener listener) throws YException {
         final Selector s = toAsbsoluteSelector(selector);
         LOG.debug("subscribe on {}", selector);
@@ -180,7 +218,10 @@ public class Workspace {
     }
 
     /**
-     * Unregisters a previous subscription with the identifier **subid**
+     * Unregisters a previous subscription.
+     * 
+     * @param the subscription id to unregister
+     * @throws YException if unsubscribe failed.
      */
     public void unsubscribe(SubscriptionId subid) throws YException {
         // TODO when available in zenoh-c
@@ -190,8 +231,11 @@ public class Workspace {
     private static final Resource[] EMPTY_EVAL_REPLY = new Resource[0];
 
     /**
-     * Registers an evaluation function **eval** under the provided **path**. The **path** can be absolute or relative
-     * to the workspace.
+     * Registers an evaluation function under the provided path.
+     * 
+     * @param path the Path where the function can be triggered using {@link #eval(Selector)}
+     * @param eval the evaluation function
+     * @throws YException if registration failed.
      */
     public void registerEval(Path path, Eval eval) throws YException {
         final Path p = toAsbsolutePath(path);
@@ -232,6 +276,12 @@ public class Workspace {
 
     }
 
+    /**
+     * Unregister a previously registered evaluation function.
+     * 
+     * @param path the path where the function has been registered
+     * @throws YException if unregistration failed.
+     */
     public void unregister_eval(Path path) throws YException {
         Storage s = evals.remove(path);
         if (s != null) {
@@ -240,15 +290,11 @@ public class Workspace {
     }
 
     /**
-     * Requests the evaluation of registered evals whose registration **path** matches the given **selector**.
+     * Requests the evaluation of registered evals whose registration path matches the given selector.
      * 
-     * If several evaluation function are registered with the same path (by different Yaks clients), then Yaks will call
-     * N functions where N=[multiplicity] (default value is 1). Note that in such case, the returned *{ <path,value> }*
-     * will contain N time each matching path with the different values returned by each evaluation. The **encoding**
-     * indicates the expected encoding of the resulting values. If the original values have a different encoding, Yaks
-     * will try to transcode them into the expected encoding. By default, if no encoding is specified, the values are
-     * returned with their original encoding. The **fallback** indicates the action that YAKS will perform if the
-     * transcoding of a value fails.
+     * @param selector the selector
+     * @return a collection of path/value where each value has been computed by the matching evaluation functions.
+     * @throws YException if eval failed.
      */
     public Collection<PathValue> eval(Selector selector) throws YException {
         final Selector s = toAsbsoluteSelector(selector);
