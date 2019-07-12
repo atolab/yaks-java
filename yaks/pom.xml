@@ -34,7 +34,7 @@
 
 
   <profiles>
-    <!-- default profile: the javadoc is generated.
+    <!-- release profile: the javadoc is generated.
     -->
     <profile>
       <id>release</id>

@@ -76,6 +76,16 @@
     <module>parent-pom</module>
     <module>yaks</module>
     <module>examples</module>
-    <module>assembly</module>
   </modules>
+
+  <profiles>
+    <!-- In release profile, add assembly module -->
+    <profile>
+      <id>release</id>
+      <modules>
+        <module>assembly</module>
+      </modules>
+    </profile>
+  </profiles>
+
 </project>
