@@ -46,7 +46,7 @@ public class Admin {
      * Add a backend in the specified Yaks.
      */
     public void addBackend(String beid, Properties properties, String yaks) throws YException {
-        String path = String.format("/@/%s/backend/%s", yaks, beid);
+        String path = String.format("/@/%s/plugins/yaks/backend/%s", yaks, beid);
         w.put(new Path(path), new PropertiesValue(properties));
     }
 
@@ -61,7 +61,7 @@ public class Admin {
      * Get a backend's properties from the specified Yaks.
      */
     public Properties getBackend(String beid, String yaks) throws YException {
-        String sel = String.format("/@/%s/backend/%s", yaks, beid);
+        String sel = String.format("/@/%s/plugins/yaks/backend/%s", yaks, beid);
         Collection<PathValue> pvs = w.get(new Selector(sel));
         if (! pvs.iterator().hasNext()) {
             return null;
@@ -81,7 +81,7 @@ public class Admin {
      * Get all the backends from the specified Yaks.
      */
     public Map<String, Properties> getBackends(String yaks) throws YException {
-        String sel = String.format("/@/%s/backend/*", yaks);
+        String sel = String.format("/@/%s/plugins/yaks/backend/*", yaks);
         Collection<PathValue> pvs = w.get(new Selector(sel));
         Map<String, Properties> result = new Hashtable<String, Properties>(pvs.size());
         for (PathValue pv : pvs) {
@@ -102,7 +102,7 @@ public class Admin {
      * Remove a backend from the specified Yaks.
      */
     public void removeBackend(String beid, String yaks) throws YException {
-        String path = String.format("/@/%s/backend/%s", yaks, beid);
+        String path = String.format("/@/%s/plugins/yaks/backend/%s", yaks, beid);
         w.remove(new Path(path));
     }
 
@@ -133,7 +133,7 @@ public class Admin {
      * Add a storage in the specified Yaks, using the specified backend.
      */
     public void addStorageOnBackend(String stid, Properties properties, String backend, String yaks) throws YException {
-        String path = String.format("/@/%s/backend/%s/storage/%s", yaks, backend, stid);
+        String path = String.format("/@/%s/plugins/yaks/backend/%s/storage/%s", yaks, backend, stid);
         w.put(new Path(path), new PropertiesValue(properties));
     }
 
@@ -148,7 +148,7 @@ public class Admin {
      * Get a storage's properties from the specified Yaks.
      */
     public Properties getStorage(String stid, String yaks) throws YException {
-        String sel = String.format("/@/%s/backend/*/storage/%s", yaks, stid);
+        String sel = String.format("/@/%s/plugins/yaks/backend/*/storage/%s", yaks, stid);
         Collection<PathValue> pvs = w.get(new Selector(sel));
         if (! pvs.iterator().hasNext()) {
             return null;
@@ -182,7 +182,7 @@ public class Admin {
      * Get all the storages from the specified backend within the specified Yaks.
      */
     public Map<String, Properties> getStoragesFromBackend(String backend, String yaks) throws YException {
-        String sel = String.format("/@/%s/backend/%s/storage/*", yaks, backend);
+        String sel = String.format("/@/%s/plugins/yaks/backend/%s/storage/*", yaks, backend);
         Collection<PathValue> pvs = w.get(new Selector(sel));
         Map<String, Properties> result = new Hashtable<String, Properties>(pvs.size());
         for (PathValue pv : pvs) {
@@ -204,7 +204,7 @@ public class Admin {
      * Remove a backend from the specified Yaks.
      */
     public void removeStorage(String stid, String yaks) throws YException {
-        String sel = String.format("/@/%s/backend/*/storage/%s", yaks, stid);
+        String sel = String.format("/@/%s/plugins/yaks/backend/*/storage/%s", yaks, stid);
         Collection<PathValue> pvs = w.get(new Selector(sel));
         if (pvs.iterator().hasNext()) {
             Path p = pvs.iterator().next().getPath();
