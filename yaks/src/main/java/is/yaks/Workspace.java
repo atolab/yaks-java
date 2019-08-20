@@ -9,6 +9,8 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Hashtable;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.nio.ByteBuffer;
 
 import org.slf4j.Logger;
@@ -127,8 +129,8 @@ public class Workspace {
                             case Z_STORAGE_DATA:
                                 Path path = new Path(reply.getRname());
                                 ByteBuffer data = reply.getData();
-                                LOG.trace("Get on {} => Z_STORAGE_DATA {} : {}", s, data);
                                 short encodingFlag = (short) reply.getInfo().getEncoding();
+                                LOG.debug("Get on {} => Z_STORAGE_DATA {} : {} bytes - encoding: {}", s, path, data.remaining(), encodingFlag);
                                 try {
                                     Value value = Encoding.fromFlag(encodingFlag).getDecoder().decode(data);
                                     results.add(new PathValue(path, value));
@@ -230,8 +232,11 @@ public class Workspace {
     private static final String ZENOH_EVAL_PREFIX = "+";
     private static final Resource[] EMPTY_EVAL_REPLY = new Resource[0];
 
+    private static final ExecutorService THREAD_POOL = Executors.newCachedThreadPool();
+
     /**
      * Registers an evaluation function under the provided path.
+     * The function will be evaluated in a dedicated thread, and thus may call any other Workspace operation.
      * 
      * @param path the Path where the function can be triggered using {@link #eval(Selector)}
      * @param eval the evaluation function
@@ -246,24 +251,27 @@ public class Workspace {
                     LOG.debug("Registered eval on {} received a publication on {}. Ignoer it!", p, rname);
                 }
 
-                public Resource[] queryHandler(String rname, String predicate) {
+                public void queryHandler(String rname, String predicate, RepliesSender repliesSender) {
                     LOG.debug("Registered eval on {} handling query {}?{}", p, rname, predicate);
                     try {
                         Selector s = new Selector(rname+"?"+predicate);
-                        Value v = eval.callback(path, predicateToProperties(s.getProperties()));
-                        LOG.debug("Registered eval on {} return value: {}", p, v);
-                        return new Resource[]{
-                            new Resource(path.toString(), v.encode(), v.getEncoding().getFlag(), Change.Kind.PUT.value())
-                        };
+                        THREAD_POOL.execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                Value v = eval.callback(path, predicateToProperties(s.getProperties()));
+                                LOG.debug("Registered eval on {} handling query {}?{} returns: {}", p, rname, predicate, v);
+                                repliesSender.sendReplies(
+                                    new Resource[]{
+                                        new Resource(path.toString(), v.encode(), v.getEncoding().getFlag(), Change.Kind.PUT.value())
+                                    }
+                                );
+                            }
+                        });
                     } catch (Throwable e) {
                         LOG.warn("Registered eval on {} caught an exception while handling query {} {} : {}", p, rname, predicate, e);
                         LOG.debug("Stack trace: ", e);
-                       return EMPTY_EVAL_REPLY;
+                        repliesSender.sendReplies(EMPTY_EVAL_REPLY);
                     }
-                }
-
-                public void repliesCleaner(Resource[] replies) {
-                    // do nothing
                 }
             };
 
