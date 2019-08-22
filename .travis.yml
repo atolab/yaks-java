@@ -6,4 +6,4 @@ before_install:
   - sudo update-ca-certificates -f
   
 language: java
-jdk: oraclejdk9
+#jdk: oraclejdk9
