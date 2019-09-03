@@ -226,7 +226,11 @@ public class Workspace {
      * @throws YException if unsubscribe failed.
      */
     public void unsubscribe(SubscriptionId subid) throws YException {
-        // TODO when available in zenoh-c
+        try {
+            subid.getZSubscriber().undeclare();
+        } catch (ZException e) {
+            throw new YException("Unsubscribe failed", e);
+        }
     }
 
     private static final String ZENOH_EVAL_PREFIX = "+";
@@ -293,7 +297,11 @@ public class Workspace {
     public void unregister_eval(Path path) throws YException {
         Storage s = evals.remove(path);
         if (s != null) {
-            // TODO: remove storage when possible in zenoh-c
+            try {
+                s.undeclare();
+            } catch (ZException e) {
+                throw new YException("unregister_eval failed", e);
+            }
         }
     }
 
