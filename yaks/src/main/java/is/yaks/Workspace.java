@@ -246,7 +246,7 @@ public class Workspace {
         final Path p = toAsbsolutePath(path);
         LOG.debug("registerEval on {}", p);
         try {
-            Storage s = new Storage() {
+            StorageCallback cb = new StorageCallback() {
                 public void subscriberCallback(String rname, ByteBuffer data, DataInfo info) {
                     LOG.debug("Registered eval on {} received a publication on {}. Ignoer it!", p, rname);
                 }
@@ -275,7 +275,7 @@ public class Workspace {
                 }
             };
 
-            zenoh.declareStorage(ZENOH_EVAL_PREFIX + p.toString(), s);
+            Storage s = zenoh.declareStorage(ZENOH_EVAL_PREFIX + p.toString(), cb);
             evals.put(p, s);
 
         } catch (ZException e) {
