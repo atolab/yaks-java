@@ -135,7 +135,7 @@ public class Workspace {
                                     Value value = Encoding.fromFlag(encodingFlag).getDecoder().decode(data);
                                     results.add(new PathValue(path, value));
                                 } catch (YException e) {
-                                    LOG.warn("Eval on {}: error decoding reply {} : {}", s, reply.getRname(), e);
+                                    LOG.warn("Get on {}: error decoding reply {} : {}", s, reply.getRname(), e);
                                 }
                                 break;
                             case Z_STORAGE_FINAL:
@@ -233,7 +233,6 @@ public class Workspace {
         }
     }
 
-    private static final String ZENOH_EVAL_PREFIX = "+";
     private static final Resource[] EMPTY_EVAL_REPLY = new Resource[0];
 
     private static final ExecutorService THREAD_POOL = Executors.newCachedThreadPool();
@@ -279,7 +278,7 @@ public class Workspace {
                 }
             };
 
-            Storage s = zenoh.declareStorage(ZENOH_EVAL_PREFIX + p.toString(), cb);
+            Storage s = zenoh.declareStorage(p.toString(), cb);
             evals.put(p, s);
 
         } catch (ZException e) {
@@ -304,70 +303,6 @@ public class Workspace {
             }
         }
     }
-
-    /**
-     * Requests the evaluation of registered evals whose registration path matches the given selector.
-     * 
-     * @param selector the selector
-     * @return a collection of path/value where each value has been computed by the matching evaluation functions.
-     * @throws YException if eval failed.
-     */
-    public Collection<PathValue> eval(Selector selector) throws YException {
-        final Selector s = toAsbsoluteSelector(selector);
-        LOG.debug("Eval on {}", s);
-        try {
-            final Collection<PathValue> results = new LinkedList<PathValue>();
-            final java.util.concurrent.atomic.AtomicBoolean queryFinished =
-                new java.util.concurrent.atomic.AtomicBoolean(false);
-            
-            zenoh.query(ZENOH_EVAL_PREFIX+s.getPath(), s.getOptionalPart(),
-                new ReplyCallback() {
-                    public void handle(ReplyValue reply) {
-                        switch (reply.getKind()) {
-                            case Z_STORAGE_DATA:
-                                Path path = new Path(reply.getRname());
-                                ByteBuffer data = reply.getData();
-                                LOG.trace("Eval on {} => Z_STORAGE_DATA {} : {}", s, data);
-                                short encodingFlag = (short) reply.getInfo().getEncoding();
-                                try {
-                                    Value value = Encoding.fromFlag(encodingFlag).getDecoder().decode(data);
-                                    results.add(new PathValue(path, value));
-                                } catch (YException e) {
-                                    LOG.warn("Eval on {}: error decoding reply {} : {}", s, reply.getRname(), e);
-                                }
-                                break;
-                            case Z_STORAGE_FINAL:
-                                LOG.trace("Eval on {} => Z_STORAGE_FINAL", s);
-                                break;
-                            case Z_REPLY_FINAL:
-                                LOG.trace("Eval on {} => Z_REPLY_FINAL => {} values received", s, results.size());
-                                synchronized (results) {
-                                    queryFinished.set(true);
-                                    results.notify();
-                                }
-                                break;
-                        }
-                    }
-                }
-            );
-
-            synchronized (results) {
-                while (!queryFinished.get()) {
-                    try {
-                        results.wait();
-                    } catch (InterruptedException e) {
-                        // ignore
-                    }
-                }
-            }
-            return results;
-
-        } catch (ZException e) {
-            throw new YException("Eval on "+selector+" failed", e);
-        }
-
-    }
-
 
 
     private static Properties predicateToProperties(String predicate) {
