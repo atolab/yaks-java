@@ -33,26 +33,31 @@ public final class Selector implements Comparable<Selector> {
         if (!m.matches()) {
             throw new IllegalArgumentException("Invalid selector (not matching regex)");
         }
-        this.path = m.group(1);
-        this.predicate = m.group(3);
-        if (this.predicate == null) this.predicate = "";
-        this.properties = m.group(5);
-        if (this.properties == null) this.properties = "";
-        this.fragment = m.group(7);
-        if (this.fragment == null) this.fragment = "";
+        String path = m.group(1);
+        String predicate = m.group(3);
+        if (predicate == null) predicate = "";
+        String properties = m.group(5);
+        if (properties == null) properties = "";
+        String fragment = m.group(7);
+        if (fragment == null) fragment = "";
 
+        init(path, predicate, properties, fragment);
+    }
+
+    private Selector(String path, String predicate, String properties, String fragment) {
+        init(path, predicate, properties, fragment);
+    }
+
+    private void init(String path, String predicate, String properties, String fragment) {
+        this.path = path;
+        this.predicate = predicate;
+        this.properties = properties;
+        this.fragment = fragment;
         this.optionalPart = String.format("%s%s%s",
             predicate,
             (properties.length() > 0 ? "("+properties+")" : ""),
             (fragment.length() > 0 ? "#"+fragment : ""));
         this.toString = path + (optionalPart.length() > 0 ? "?"+optionalPart : "");
-    }
-
-    private Selector(String path, String predicate, String fragment) {
-        this.path = path;
-        this.predicate = predicate;
-        this.fragment = fragment;
-        this.toString = path + (predicate.isEmpty() ? "" : "?"+predicate) + (fragment.isEmpty() ? "" : "#"+fragment);
     }
 
     public String getPath() {
@@ -104,7 +109,7 @@ public final class Selector implements Comparable<Selector> {
     }
 
     public Selector addPrefix(Path prefix) {
-        return new Selector(prefix.toString() + this.path, this.predicate, this.fragment);
+        return new Selector(prefix.toString() + this.path, this.predicate, this.properties, this.fragment);
     }
 
 }
