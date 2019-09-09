@@ -21,7 +21,6 @@ class YPutThr {
             System.exit(-1);
         }
 
-        java.nio.ByteBuffer data;
         int len;
         String lenArg = args[0];
         if (lenArg.startsWith("I")) {
@@ -38,14 +37,6 @@ class YPutThr {
             data = java.nio.ByteBuffer.allocateDirect(len+8);
             System.out.println("Running throughput test for payload of "+len+" bytes from a direct ByteBuffer");
         }
-
-        int posInit = data.position();
-        Vle.encode(data, len);
-        for (int i = 0; i < len; ++i) {
-            data.put((byte) (i%10));
-        }
-        data.flip();
-        data.position(posInit);
 
         try {
         	String path = "/test/thr";
