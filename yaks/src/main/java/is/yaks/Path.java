@@ -15,9 +15,9 @@ public class Path implements Comparable<Path> {
         for (int i=0; i < p.length(); ++i) {
             char c = p.charAt(i);
             if (c == '?' || c == '#' || c == '[' || c == ']' || c == '*')
-            throw new IllegalArgumentException("Invalid path: "+p);
+            throw new IllegalArgumentException("Invalid path: " + p + " (forbidden character at index " + i + ")");
         }
-        this.path = p;
+        this.path = removeUselessSlashes(p);
     }
 
     private String removeUselessSlashes(String s) {

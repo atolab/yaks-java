@@ -3,7 +3,7 @@ package is.yaks;
 import java.util.List;
 
 /**
- * Interface to be implemted for subscriptions (see {@link Workspace#subscribe(Selector, Listener)})
+ * Interface to be implemented for subscriptions (see {@link Workspace#subscribe(Selector, Listener)})
  */
 public interface Listener {
 
