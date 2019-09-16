@@ -2,7 +2,7 @@ import is.yaks.*;
 
 import java.util.Properties;
 
-public class YRegisterEval {
+public class YEval {
 
     public static void main(String[] args) {
         String locator = "tcp/127.0.0.1:7447";

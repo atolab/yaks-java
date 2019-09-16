@@ -30,13 +30,13 @@ public class Workspace {
 
     private Path path;
     private Zenoh zenoh;
-    private Map<Path, Storage> evals;
+    private Map<Path, io.zenoh.Eval> evals;
 
 
     protected Workspace(Path path, Zenoh zenoh) {
         this.path = path;
         this.zenoh = zenoh;
-        this.evals = new Hashtable<Path, Storage>();
+        this.evals = new Hashtable<Path, io.zenoh.Eval>();
     }
 
     private Path toAsbsolutePath(Path p) {
@@ -127,10 +127,15 @@ public class Workspace {
                     public void handle(ReplyValue reply) {
                         switch (reply.getKind()) {
                             case Z_STORAGE_DATA:
+                            case Z_EVAL_DATA:
                                 Path path = new Path(reply.getRname());
                                 ByteBuffer data = reply.getData();
                                 short encodingFlag = (short) reply.getInfo().getEncoding();
-                                LOG.debug("Get on {} => Z_STORAGE_DATA {} : {} bytes - encoding: {}", s, path, data.remaining(), encodingFlag);
+                                if (reply.getKind() == ReplyValue.Kind.Z_STORAGE_DATA) {
+                                    LOG.debug("Get on {} => Z_STORAGE_DATA {} : {} bytes - encoding: {}", s, path, data.remaining(), encodingFlag);
+                                } else {
+                                    LOG.debug("Get on {} => Z_EVAL_DATA {} : {} bytes - encoding: {}", s, path, data.remaining(), encodingFlag);
+                                }
                                 try {
                                     Value value = Encoding.fromFlag(encodingFlag).getDecoder().decode(data);
                                     results.add(new PathValue(path, value));
@@ -140,6 +145,9 @@ public class Workspace {
                                 break;
                             case Z_STORAGE_FINAL:
                                 LOG.trace("Get on {} => Z_STORAGE_FINAL", s);
+                                break;
+                            case Z_EVAL_FINAL:
+                                LOG.trace("Get on {} => Z_EVAL_FINAL", s);
                                 break;
                             case Z_REPLY_FINAL:
                                 LOG.trace("Get on {} => Z_REPLY_FINAL => {} values received", s, results.size());
@@ -249,11 +257,7 @@ public class Workspace {
         final Path p = toAsbsolutePath(path);
         LOG.debug("registerEval on {}", p);
         try {
-            StorageCallback cb = new StorageCallback() {
-                public void subscriberCallback(String rname, ByteBuffer data, DataInfo info) {
-                    LOG.debug("Registered eval on {} received a publication on {}. Ignoer it!", p, rname);
-                }
-
+            EvalCallback cb = new EvalCallback() {
                 public void queryHandler(String rname, String predicate, RepliesSender repliesSender) {
                     LOG.debug("Registered eval on {} handling query {}?{}", p, rname, predicate);
                     try {
@@ -278,8 +282,8 @@ public class Workspace {
                 }
             };
 
-            Storage s = zenoh.declareStorage(p.toString(), cb);
-            evals.put(p, s);
+            io.zenoh.Eval e = zenoh.declareEval(p.toString(), cb);
+            evals.put(p, e);
 
         } catch (ZException e) {
             throw new YException("registerEval on "+p+" failed", e);
@@ -294,12 +298,12 @@ public class Workspace {
      * @throws YException if unregistration failed.
      */
     public void unregister_eval(Path path) throws YException {
-        Storage s = evals.remove(path);
-        if (s != null) {
+        io.zenoh.Eval e = evals.remove(path);
+        if (e != null) {
             try {
-                s.undeclare();
-            } catch (ZException e) {
-                throw new YException("unregister_eval failed", e);
+                e.undeclare();
+            } catch (ZException ex) {
+                throw new YException("unregister_eval failed", ex);
             }
         }
     }

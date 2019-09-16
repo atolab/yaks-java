@@ -8,7 +8,7 @@ import java.util.Properties;
 public interface Eval {
 
     /**
-     * The callback operation called each time the {@link Workspace#eval(Selecror)} operation is called
+     * The callback operation called each time the {@link Workspace#get(Selector)} operation is called
      * for a Selector matching the Path this Eval is registered with.
      * 
      * @param path the Path with which the Eval has been registered with (in case the same Eval is registered with several Paths).
