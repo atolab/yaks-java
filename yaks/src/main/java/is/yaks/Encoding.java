@@ -4,8 +4,8 @@ public enum Encoding {
 
     RAW (RawValue.Decoder.getEncodingFlag(), RawValue.Decoder),
     STRING (StringValue.Decoder.getEncodingFlag(), StringValue.Decoder),
-    PROPERTIES (PropertiesValue.Decoder.getEncodingFlag(), PropertiesValue.Decoder);
-    // JSON((short) 0x04),
+    PROPERTIES (PropertiesValue.Decoder.getEncodingFlag(), PropertiesValue.Decoder),
+    JSON((short)0x04, StringValue.Decoder);
     // SQL((short) 0x05);
 
     private short flag;
@@ -35,9 +35,9 @@ public enum Encoding {
         else if (flag == PROPERTIES.getFlag()) {
             return PROPERTIES;
         }
-        // else if (flag == JSON.flag()) {
-        //     return JSON;
-        // }
+        else if (flag == JSON.getFlag()) {
+            return JSON;
+        }
         else {
             throw new YException("Unkown encoding flag: "+flag);
         }
