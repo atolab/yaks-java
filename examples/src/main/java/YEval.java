@@ -53,7 +53,7 @@ public class YEval {
                             }
                         }
                         System.out.printf("   >> Returning string: \"Eval from %s\"\n", name);
-                        return new StringValue("Eval from "+name+"!");
+                        return new StringValue("Eval from "+name);
                     }
                 }
             );
