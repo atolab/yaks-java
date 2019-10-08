@@ -8,7 +8,7 @@ public class YGet {
             locator = args[0];
         }
 
-        String selector = "/demo/**";
+        String selector = "/demo/example/**";
         if (args.length > 1) {
             selector = args[1];
         }

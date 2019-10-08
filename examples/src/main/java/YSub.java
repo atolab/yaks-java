@@ -1,5 +1,6 @@
 import is.yaks.*;
 
+import java.io.InputStreamReader;
 import java.util.List;
 
 public class YSub    {
@@ -10,7 +11,7 @@ public class YSub    {
             locator = args[0];
         }
 
-        String s = "/demo/**";
+        String s = "/demo/example/**";
         if (args.length > 1) {
             s = args[1];
         }
@@ -29,13 +30,28 @@ public class YSub    {
                 new Listener() {
                     public void onChanges(List<Change> changes) {
                         for (Change c : changes) {
-                            System.out.println(" -> "+c.getPath()+" : "+c.getValue());
+                            switch (c.getKind()) {
+                                case PUT:
+                                    System.out.printf(">> [Subscription listener] Received PUT on '%s': '%s')\n", c.getPath(), c.getValue());
+                                    break;
+                                case UPDATE:
+                                    System.out.printf(">> [Subscription listener] Received UPDATE on '%s': '%s')\n", c.getPath(), c.getValue());
+                                    break;
+                                case REMOVE:
+                                    System.out.printf(">> [Subscription listener] Received REMOVE on '%s')\n", c.getPath());
+                                    break;
+                                default:
+                                    System.err.printf(">> [Subscription listener] Received unkown operation with kind '%s' on '%s')\n", c.getKind(), c.getPath());
+                                    break;
+                            }
                         }
                     }
                 }
             );
 
-            Thread.sleep(60000);
+            System.out.println("Enter 'q' to quit...\n");
+            InputStreamReader stdin = new InputStreamReader(System.in);
+            while ((char) stdin.read() != 'q');
 
             y.logout();
         } catch (Throwable e) {

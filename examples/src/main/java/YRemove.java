@@ -1,6 +1,6 @@
 import is.yaks.*;
 
-public class YPut {
+public class YRemove {
 
     public static void main(String[] args) {
 
@@ -15,14 +15,8 @@ public class YPut {
             path = args[1];
         }
 
-        String value = "Put from Yaks Java!";
-        if (args.length > 2) {
-            value = args[2];
-        }
-
         try {
             Path p = new Path(path);
-            Value v = new StringValue(value);
 
             System.out.println("Login to "+locator+"...");
             Yaks y = Yaks.login(locator, null);
@@ -30,8 +24,8 @@ public class YPut {
             System.out.println("Use Workspace on '/demo/example'");
             Workspace w = y.workspace(new Path("/demo/example"));
 
-            System.out.println("Put on "+p+" : "+v);
-            w.put(p, v);
+            System.out.println("Remove "+p);
+            w.remove(p);
 
             y.logout();
         } catch (Throwable e) {

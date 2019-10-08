@@ -1,7 +1,6 @@
 import is.yaks.*;
 
 import java.util.Properties;
-import java.util.Map;
 
 public class YAddStorage {
 
@@ -11,7 +10,7 @@ public class YAddStorage {
             locator = args[0];
         }
 
-        String selector = "/demo/**";
+        String selector = "/demo/example/**";
         if (args.length > 1) {
             selector = args[1];
         }
@@ -22,8 +21,6 @@ public class YAddStorage {
         }
 
         try {
-            Selector s = new Selector(selector);
-
             System.out.println("Login to "+locator+"...");
             Yaks y = Yaks.login(locator, null);
 
