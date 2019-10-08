@@ -62,7 +62,7 @@ public class Path implements Comparable<Path> {
     }
 
     public Path addPrefix(Path prefix) {
-        return new Path(prefix.toString() + this.path);
+        return new Path(prefix.toString() + "/" + this.path);
     }
 
 }
