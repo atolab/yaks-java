@@ -26,7 +26,7 @@ public class YSub    {
             Workspace w = y.workspace(new Path("/"));
 
             System.out.println("Subscribe on "+selector);
-            w.subscribe(selector, 
+            SubscriptionId subid = w.subscribe(selector, 
                 new Listener() {
                     public void onChanges(List<Change> changes) {
                         for (Change c : changes) {
@@ -53,6 +53,7 @@ public class YSub    {
             InputStreamReader stdin = new InputStreamReader(System.in);
             while ((char) stdin.read() != 'q');
 
+            w.unsubscribe(subid);
             y.logout();
         } catch (Throwable e) {
             e.printStackTrace();
