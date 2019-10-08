@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Hashtable;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.nio.ByteBuffer;
 
 import org.slf4j.Logger;
@@ -30,12 +29,14 @@ public class Workspace {
 
     private Path path;
     private Zenoh zenoh;
+    private ExecutorService threadPool;
     private Map<Path, io.zenoh.Eval> evals;
 
 
-    protected Workspace(Path path, Zenoh zenoh) {
+    protected Workspace(Path path, Zenoh zenoh, ExecutorService threadPool) {
         this.path = path;
         this.zenoh = zenoh;
+        this.threadPool = threadPool;
         this.evals = new Hashtable<Path, io.zenoh.Eval>();
     }
 
@@ -243,8 +244,6 @@ public class Workspace {
 
     private static final Resource[] EMPTY_EVAL_REPLY = new Resource[0];
 
-    private static final ExecutorService THREAD_POOL = Executors.newCachedThreadPool();
-
     /**
      * Registers an evaluation function under the provided path.
      * The function will be evaluated in a dedicated thread, and thus may call any other Workspace operation.
@@ -262,7 +261,7 @@ public class Workspace {
                     LOG.debug("Registered eval on {} handling query {}?{}", p, rname, predicate);
                     try {
                         Selector s = new Selector(rname+"?"+predicate);
-                        THREAD_POOL.execute(new Runnable() {
+                        threadPool.execute(new Runnable() {
                             @Override
                             public void run() {
                                 Value v = eval.callback(path, predicateToProperties(s.getProperties()));

@@ -1,8 +1,8 @@
 package is.yaks;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,13 +17,14 @@ public class Yaks {
     private static final Logger LOG = LoggerFactory.getLogger("is.yaks");
 
     private Zenoh zenoh;
-    private String yaksid;
+    private ExecutorService threadPool;
     private Admin admin;
 
     private Yaks(Zenoh zenoh, String yaksid) {
         this.zenoh = zenoh;
-        this.yaksid = yaksid;
-        this.admin = new Admin(new Workspace(new Path("/@"), zenoh), yaksid);
+        this.threadPool = Executors.newCachedThreadPool();
+        Workspace adminWs = new Workspace(new Path("/@"), zenoh, threadPool);
+        this.admin = new Admin(adminWs, yaksid);
     }
 
 
@@ -86,6 +87,7 @@ public class Yaks {
      * Terminates the session with Yaks.
      */
     public void logout() throws YException {
+        threadPool.shutdown();
         try {
             zenoh.close();
             this.zenoh = null;
@@ -102,7 +104,7 @@ public class Yaks {
      * @return a Workspace.
      */
     public Workspace workspace(Path path) {
-        return new Workspace(path, zenoh);
+        return new Workspace(path, zenoh, threadPool);
     }
 
     /**
@@ -111,6 +113,5 @@ public class Yaks {
     public Admin admin() {
         return admin;
     }
-
 
 }
