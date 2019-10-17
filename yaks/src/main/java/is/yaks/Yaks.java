@@ -1,5 +1,7 @@
 package is.yaks;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -15,6 +17,16 @@ import io.zenoh.*;
 public class Yaks {
 
     private static final Logger LOG = LoggerFactory.getLogger("is.yaks");
+    private static final char[] HEX_DIGITS = "0123456789abcdef".toCharArray();
+
+    private static String hexdump(byte[] bytes) {
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < bytes.length; ++i) {
+            sb.append(HEX_DIGITS[bytes[i] & 0x00F0 >>> 4])
+              .append(HEX_DIGITS[bytes[i] & 0x000F]);
+        }
+        return sb.toString();
+    }
 
     private Zenoh zenoh;
     private ExecutorService threadPool;
@@ -29,13 +41,14 @@ public class Yaks {
 
 
     private static Yaks initYaks(Zenoh z) throws YException {
-        Properties props = z.info();
-        String yaksid = props.getProperty("peer_pid");
-        if (yaksid == null) {
+        Map<Integer, byte[]> props = z.info();
+        byte[] yaksidb = props.get(Zenoh.INFO_PEER_PID_KEY);
+        if (yaksidb == null) {
             throw new YException("Failed to retrieve YaksId from Zenoh info");
         }
-        LOG.info("Connected to Yaks {}", yaksid);
-        return new Yaks(z, yaksid);
+        String yaksids = hexdump(yaksidb);
+        LOG.info("Connected to Yaks {}", yaksids);
+        return new Yaks(z, yaksids);
     }
 
     /**
@@ -73,7 +86,10 @@ public class Yaks {
     public static Yaks login(String locator, String username, String password) throws YException {
         try {
             LOG.debug("Connecting to Yaks via Zenoh on {} with username: {}", locator, username);
-            Zenoh z = Zenoh.open(locator, username, password);
+            Map<Integer, byte[]> properties = new HashMap<Integer, byte[]>(2);
+            properties.put(Zenoh.USER_KEY, "user".getBytes());
+            properties.put(Zenoh.PASSWD_KEY, "password".getBytes());
+            Zenoh z = Zenoh.open(locator, properties);
             return initYaks(z);
 
         } catch (ZException e) {

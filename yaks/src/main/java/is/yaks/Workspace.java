@@ -124,8 +124,8 @@ public class Workspace {
                 new java.util.concurrent.atomic.AtomicBoolean(false);
             
             zenoh.query(s.getPath(), s.getOptionalPart(),
-                new ReplyCallback() {
-                    public void handle(ReplyValue reply) {
+                new ReplyHandler() {
+                    public void handleReply(ReplyValue reply) {
                         switch (reply.getKind()) {
                             case Z_STORAGE_DATA:
                             case Z_EVAL_DATA:
@@ -192,8 +192,8 @@ public class Workspace {
         LOG.debug("subscribe on {}", selector);
         try {
             Subscriber sub = zenoh.declareSubscriber(s.getPath(), SubMode.push(),
-                new SubscriberCallback() {
-                    public void handle(String rname, ByteBuffer data, DataInfo info) {
+                new DataHandler() {
+                    public void handleData(String rname, ByteBuffer data, DataInfo info) {
                         LOG.debug("subscribe on {} : received notif for {} (kind:{})", s, rname, info.getKind());
                         try {
                             // TODO: list of more than 1 change when available in zenoh-c
@@ -256,8 +256,8 @@ public class Workspace {
         final Path p = toAsbsolutePath(path);
         LOG.debug("registerEval on {}", p);
         try {
-            EvalCallback cb = new EvalCallback() {
-                public void queryHandler(String rname, String predicate, RepliesSender repliesSender) {
+            QueryHandler qh = new QueryHandler() {
+                public void handleQuery(String rname, String predicate, RepliesSender repliesSender) {
                     LOG.debug("Registered eval on {} handling query {}?{}", p, rname, predicate);
                     try {
                         Selector s = new Selector(rname+"?"+predicate);
@@ -281,7 +281,7 @@ public class Workspace {
                 }
             };
 
-            io.zenoh.Eval e = zenoh.declareEval(p.toString(), cb);
+            io.zenoh.Eval e = zenoh.declareEval(p.toString(), qh);
             evals.put(p, e);
 
         } catch (ZException e) {
