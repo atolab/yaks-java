@@ -62,7 +62,7 @@ public class YEval {
             InputStreamReader stdin = new InputStreamReader(System.in);
             while ((char) stdin.read() != 'q');
 
-            w.unregister_eval(path);
+            w.unregisterEval(path);
             y.logout();
         } catch (Throwable e) {
             e.printStackTrace();

@@ -296,13 +296,13 @@ public class Workspace {
      * @param path the path where the function has been registered
      * @throws YException if unregistration failed.
      */
-    public void unregister_eval(Path path) throws YException {
+    public void unregisterEval(Path path) throws YException {
         io.zenoh.Eval e = evals.remove(path);
         if (e != null) {
             try {
                 e.undeclare();
             } catch (ZException ex) {
-                throw new YException("unregister_eval failed", ex);
+                throw new YException("unregisterEval failed", ex);
             }
         }
     }
