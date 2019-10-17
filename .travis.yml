@@ -1,6 +1,6 @@
 before_install:
   - sudo apt-get install -y libev4
-  - sudo curl -L -o /usr/local/lib/zenoh-0.3.0-SNAPSHOT.jar https://atolab.github.io/atobin/zenoh-java/latest/ubuntu/16.04/zenoh-0.3.0-SNAPSHOT.jar
+  - sudo curl -L -o /usr/local/lib/zenoh-0.3.0-SNAPSHOT.jar https://atolab.github.io/atobin/zenoh-java/unstable/ubuntu/16.04/zenoh-0.3.0-SNAPSHOT.jar
   - mvn install:install-file -Dfile=/usr/local/lib/zenoh-0.3.0-SNAPSHOT.jar -DgroupId=io.zenoh -DartifactId=zenoh -Dversion=0.3.0-SNAPSHOT -Dpackaging=jar
 
 #  - export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib
