@@ -1,7 +1,9 @@
 package is.yaks;
 
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -9,21 +11,25 @@ import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.zenoh.*;
+import io.zenoh.ZException;
+import io.zenoh.Zenoh;
 
 /**
  * The Yaks client API.
  */
 public class Yaks {
 
+    private static final String PROP_USER = "user";
+    private static final String PROP_PASSWORD = "password";
+
     private static final Logger LOG = LoggerFactory.getLogger("is.yaks");
     private static final char[] HEX_DIGITS = "0123456789abcdef".toCharArray();
+    private static final Charset UTF8 = Charset.forName("UTF-8");
 
     private static String hexdump(byte[] bytes) {
         StringBuffer sb = new StringBuffer();
         for (int i = 0; i < bytes.length; ++i) {
-            sb.append(HEX_DIGITS[bytes[i] & 0x00F0 >>> 4])
-              .append(HEX_DIGITS[bytes[i] & 0x000F]);
+            sb.append(HEX_DIGITS[bytes[i] & 0x00F0 >>> 4]).append(HEX_DIGITS[bytes[i] & 0x000F]);
         }
         return sb.toString();
     }
@@ -39,7 +45,6 @@ public class Yaks {
         this.admin = new Admin(adminWs, yaksid);
     }
 
-
     private static Yaks initYaks(Zenoh z) throws YException {
         Map<Integer, byte[]> props = z.info();
         byte[] yaksidb = props.get(Zenoh.INFO_PEER_PID_KEY);
@@ -52,50 +57,41 @@ public class Yaks {
     }
 
     /**
-     * Establish a session with the Yaks instance reachable via provided Zenoh locator.
-     * The locator must have the format: tcp/<ip>:<port> .
+     * Establish a session with the Yaks instance reachable via provided Zenoh
+     * locator. The locator must have the format: tcp/<ip>:<port> .
      * 
-     * @param locator the Zenoh locator.
-     * @param properties unused in this version (can be null).
+     * @param locator    the Zenoh locator.
+     * @param properties the Properties to be used for this session (e.g. "user",
+     *                   "password"...). Can be null
      * @return a Yaks object.
      * @throws YException if login fails.
      */
     public static Yaks login(String locator, Properties properties) throws YException {
         try {
             LOG.debug("Connecting to Yaks via Zenoh on {}", locator);
-            Zenoh z = Zenoh.open(locator);
+            Zenoh z;
+            if (properties == null) {
+                z = Zenoh.open(locator);
+            } else {
+                z = Zenoh.open(locator, getZenohProperties(properties));
+            }
             return initYaks(z);
 
         } catch (ZException e) {
             LOG.warn("Connection Yaks via Zenoh on {} failed", locator, e);
-            throw new YException("Login failed to "+locator, e);
+            throw new YException("Login failed to " + locator, e);
         }
     }
 
-    /**
-     * Establish a session with the Yaks instance reachable via provided Zenoh locator
-     * and using the specified user name and password.
-     * The locator must have the format: tcp/<ip>:<port> .
-     * 
-     * @param locator the Zenoh locator.
-     * @param username the user name.
-     * @param password the password.
-     * @return a Yaks object.
-     * @throws YException if login fails.
-     */
-    public static Yaks login(String locator, String username, String password) throws YException {
-        try {
-            LOG.debug("Connecting to Yaks via Zenoh on {} with username: {}", locator, username);
-            Map<Integer, byte[]> properties = new HashMap<Integer, byte[]>(2);
-            properties.put(Zenoh.USER_KEY, "user".getBytes());
-            properties.put(Zenoh.PASSWD_KEY, "password".getBytes());
-            Zenoh z = Zenoh.open(locator, properties);
-            return initYaks(z);
+    private static Map<Integer, byte[]> getZenohProperties(Properties properties) {
+        Map<Integer, byte[]> zprops = new HashMap<Integer, byte[]>();
 
-        } catch (ZException e) {
-            LOG.warn("Connection Yaks via Zenoh on {} failed", locator, e);
-            throw new YException("Login failed to "+locator, e);
-        }
+        if (properties.containsKey(PROP_USER))
+            zprops.put(Zenoh.USER_KEY, properties.getProperty(PROP_USER).getBytes(UTF8));
+        if (properties.containsKey(PROP_PASSWORD))
+            zprops.put(Zenoh.PASSWD_KEY, properties.getProperty(PROP_PASSWORD).getBytes(UTF8));
+
+        return zprops;
     }
 
 
