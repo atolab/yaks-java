@@ -202,8 +202,7 @@ public class Workspace {
                             Path path = new Path(rname);
                             Change.Kind kind = Change.Kind.fromInt(info.getKind());
                             short encodingFlag = (short) info.getEncoding();
-                            // TODO: timestamp when available in zenoh-c
-                            long time = 0L;
+                            long time = info.getTime();
                             try {
                                 Value value = null;
                                 if (kind != Change.Kind.REMOVE) {
