@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.com/atolab/yaks-java.svg?branch=master)](https://travis-ci.com/atolab/yaks-java)
+[![Documentation Status](https://readthedocs.org/projects/yaks-java/badge/?version=latest)](https://yaks-java.readthedocs.io/en/latest/?badge=latest)
+
 # Yaks Java Client API
 
 The Java API for Yaks, based on the zenoh-java API.
