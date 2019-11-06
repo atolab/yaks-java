@@ -47,6 +47,23 @@ public class PropertiesValue implements Value{
         return buf.toString();
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null)
+            return false;
+        if (this == obj)
+            return true;
+        if (! (obj instanceof PropertiesValue))
+            return false;
+
+        return p.equals(((PropertiesValue) obj).p);
+    }
+
+    @Override
+    public int hashCode() {
+        return p.hashCode();
+    }
+
     public static final Value.Decoder Decoder = new Value.Decoder() {
 
         public short getEncodingFlag() {
@@ -72,5 +89,4 @@ public class PropertiesValue implements Value{
             return new PropertiesValue(fromString(new String(buf.array(), utf8)));
         }
     };
-
 }

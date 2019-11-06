@@ -53,6 +53,11 @@ public class Path implements Comparable<Path> {
         return false;
     }
 
+    @Override
+    public int hashCode() {
+        return path.hashCode();
+    }
+
     public int length() {
         return path.length();
     }

@@ -30,6 +30,23 @@ public class RawValue implements Value {
         return buf.toString();
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null)
+            return false;
+        if (this == obj)
+            return true;
+        if (! (obj instanceof RawValue))
+            return false;
+
+        return buf.equals(((RawValue) obj).buf);
+    }
+
+    @Override
+    public int hashCode() {
+        return buf.hashCode();
+    }
+
     public static final Value.Decoder Decoder = new Value.Decoder() {
         public short getEncodingFlag() {
             return ENCODING_FLAG;
@@ -39,5 +56,4 @@ public class RawValue implements Value {
             return new RawValue(buf);
         }
     };
-
 }

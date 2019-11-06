@@ -33,6 +33,23 @@ public class StringValue implements Value{
         return s;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null)
+            return false;
+        if (this == obj)
+            return true;
+        if (! (obj instanceof StringValue))
+            return false;
+
+        return s.equals(((StringValue) obj).s);
+    }
+
+    @Override
+    public int hashCode() {
+        return s.hashCode();
+    }
+
     public static final Value.Decoder Decoder = new Value.Decoder() {
         public short getEncodingFlag() {
             return ENCODING_FLAG;

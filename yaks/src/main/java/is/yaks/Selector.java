@@ -104,6 +104,11 @@ public final class Selector implements Comparable<Selector> {
         return false;
     }
 
+    @Override
+    public int hashCode() {
+        return toString.hashCode();
+    }
+
     public boolean isRelative() {
         return path.length() == 0 || path.charAt(0) != '/';
     }

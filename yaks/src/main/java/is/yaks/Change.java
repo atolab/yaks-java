@@ -1,5 +1,7 @@
 package is.yaks;
 
+import io.zenoh.Timestamp;
+
 /**
  * The notification of a change for a path/value in Yaks.
  * See {@link Listener}.
@@ -39,13 +41,13 @@ public class Change {
 
     private Path path;
     private Kind kind;
-    private long time;
+    private Timestamp timestamp;
     private Value value;
 
-    protected Change(Path path, Kind kind, long time, Value value) {
+    protected Change(Path path, Kind kind, Timestamp timestamp, Value value) {
         this.path = path;
         this.kind = kind;
-        this.time = time;
+        this.timestamp = timestamp;
         this.value = value;
     }
 
@@ -57,8 +59,8 @@ public class Change {
         return kind;
     }
 
-    public long getTime() {
-        return time;
+    public Timestamp getTimestamp() {
+        return timestamp;
     }
     public Value getValue() {
         return value;

@@ -23,8 +23,8 @@ public class YGet {
             Workspace w = y.workspace(new Path("/"));
 
             System.out.println("Get from "+s);
-            for (PathValue pv : w.get(s)) {
-                System.out.println("  "+pv.getPath()+" : "+pv.getValue());
+            for (Entry entry : w.get(s)) {
+                System.out.println("  "+entry.getPath()+" : "+entry.getValue());
             }
 
             y.logout();

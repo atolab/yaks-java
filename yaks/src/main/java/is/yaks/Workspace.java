@@ -9,6 +9,8 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Hashtable;
 import java.util.Properties;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.nio.ByteBuffer;
 
@@ -115,11 +117,11 @@ public class Workspace {
      * @return a collection of path/value.
      * @throws YException if get failed.
      */
-    public Collection<PathValue> get(Selector selector) throws YException {
+    public Collection<Entry> get(Selector selector) throws YException {
         final Selector s = toAsbsoluteSelector(selector);
         LOG.debug("Get on {}", s);
         try {
-            final Collection<PathValue> results = new LinkedList<PathValue>();
+            final Map<Path, SortedSet<Entry>> map = new Hashtable<Path, SortedSet<Entry>>();
             final java.util.concurrent.atomic.AtomicBoolean queryFinished =
                 new java.util.concurrent.atomic.AtomicBoolean(false);
             
@@ -133,13 +135,17 @@ public class Workspace {
                                 ByteBuffer data = reply.getData();
                                 short encodingFlag = (short) reply.getInfo().getEncoding();
                                 if (reply.getKind() == ReplyValue.Kind.Z_STORAGE_DATA) {
-                                    LOG.debug("Get on {} => Z_STORAGE_DATA {} : {} bytes - encoding: {}", s, path, data.remaining(), encodingFlag);
+                                    LOG.debug("Get on {} => Z_STORAGE_DATA {} : {} ({} bytes)", s, path, reply.getInfo().getTimestamp(), data.remaining());
                                 } else {
-                                    LOG.debug("Get on {} => Z_EVAL_DATA {} : {} bytes - encoding: {}", s, path, data.remaining(), encodingFlag);
+                                    LOG.debug("Get on {} => Z_EVAL_DATA {} : {} ({} bytes)", s, path, reply.getInfo().getTimestamp(), data.remaining());
                                 }
                                 try {
                                     Value value = Encoding.fromFlag(encodingFlag).getDecoder().decode(data);
-                                    results.add(new PathValue(path, value));
+                                    Entry entry = new Entry(path, value, reply.getInfo().getTimestamp());
+                                    if (!map.containsKey(path)) {
+                                        map.put(path, new TreeSet<Entry>());
+                                    }
+                                    map.get(path).add(entry);
                                 } catch (YException e) {
                                     LOG.warn("Get on {}: error decoding reply {} : {}", s, reply.getRname(), e);
                                 }
@@ -151,10 +157,10 @@ public class Workspace {
                                 LOG.trace("Get on {} => Z_EVAL_FINAL", s);
                                 break;
                             case Z_REPLY_FINAL:
-                                LOG.trace("Get on {} => Z_REPLY_FINAL => {} values received", s, results.size());
-                                synchronized (results) {
+                                LOG.trace("Get on {} => Z_REPLY_FINAL", s);
+                                synchronized (map) {
                                     queryFinished.set(true);
-                                    results.notify();
+                                    map.notify();
                                 }
                                 break;
                         }
@@ -162,20 +168,48 @@ public class Workspace {
                 }
             );
 
-            synchronized (results) {
+            synchronized (map) {
                 while (!queryFinished.get()) {
                     try {
-                        results.wait();
+                        map.wait();
                     } catch (InterruptedException e) {
                         // ignore
                     }
                 }
             }
+
+            Collection<Entry> results = new LinkedList<Entry>();
+
+            if (isSelectorForSeries(selector)) {
+                // return all entries
+                for (SortedSet<Entry> l : map.values()) {
+                    for (Entry e : l) {
+                        results.add(e);
+                    }
+                }
+            } else {
+                // return only the latest entry for each path
+                for (SortedSet<Entry> l : map.values()) {
+                    results.add(l.last());
+                }
+            }
+            
             return results;
 
         } catch (ZException e) {
             throw new YException("Get on "+selector+" failed", e);
         }
+    }
+
+    private boolean isSelectorForSeries(Selector sel) {
+        // search for starttime or stoptime property in selector
+        String[] props = sel.getProperties().split(";");
+        for (String p : props) {
+            if (p.startsWith("starttime") || p.startsWith("stoptime")) {
+                return true;
+            } 
+        }
+        return false;
     }
 
 
@@ -202,13 +236,13 @@ public class Workspace {
                             Path path = new Path(rname);
                             Change.Kind kind = Change.Kind.fromInt(info.getKind());
                             short encodingFlag = (short) info.getEncoding();
-                            long time = info.getTime();
+                            Timestamp timestamp= info.getTimestamp();
                             try {
                                 Value value = null;
                                 if (kind != Change.Kind.REMOVE) {
                                     value = Encoding.fromFlag(encodingFlag).getDecoder().decode(data);
                                 }
-                                Change change = new Change(path, kind, time, value);
+                                Change change = new Change(path, kind, timestamp, value);
                                 changes.add(change);
                             } catch (YException e) {
                                 LOG.warn("subscribe on {}: error decoding change for {} : {}", s, rname, e);

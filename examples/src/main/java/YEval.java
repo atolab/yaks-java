@@ -43,9 +43,9 @@ public class YEval {
                         if (name.startsWith("/")) {
                             try {
                                 System.out.printf("   >> Get name to use from Yaks at path: %s\n", name);
-                                Collection<PathValue> kvs = w.get(new Selector(name));
-                                if (!kvs.isEmpty()) {
-                                    name = kvs.iterator().next().getValue().toString();
+                                Collection<Entry> entries = w.get(new Selector(name));
+                                if (!entries.isEmpty()) {
+                                    name = entries.iterator().next().getValue().toString();
                                 }
                             } catch (Throwable e) {
                                 System.err.println("Failed to get value from path "+name);

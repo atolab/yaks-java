@@ -62,11 +62,11 @@ public class Admin {
      */
     public Properties getBackend(String beid, String yaks) throws YException {
         String sel = String.format("/@/%s/plugins/yaks/backend/%s", yaks, beid);
-        Collection<PathValue> pvs = w.get(new Selector(sel));
-        if (! pvs.iterator().hasNext()) {
+        Collection<Entry> entries = w.get(new Selector(sel));
+        if (! entries.iterator().hasNext()) {
             return null;
         } else {
-            return propertiesOfValue(pvs.iterator().next().getValue());
+            return propertiesOfValue(entries.iterator().next().getValue());
         }
     }
 
@@ -82,9 +82,9 @@ public class Admin {
      */
     public Map<String, Properties> getBackends(String yaks) throws YException {
         String sel = String.format("/@/%s/plugins/yaks/backend/*", yaks);
-        Collection<PathValue> pvs = w.get(new Selector(sel));
-        Map<String, Properties> result = new Hashtable<String, Properties>(pvs.size());
-        for (PathValue pv : pvs) {
+        Collection<Entry> entries = w.get(new Selector(sel));
+        Map<String, Properties> result = new Hashtable<String, Properties>(entries.size());
+        for (Entry pv : entries) {
             String beid = pv.getPath().toString().substring(sel.length()-1);
             result.put(beid, propertiesOfValue(pv.getValue()));
         }
@@ -149,11 +149,11 @@ public class Admin {
      */
     public Properties getStorage(String stid, String yaks) throws YException {
         String sel = String.format("/@/%s/plugins/yaks/backend/*/storage/%s", yaks, stid);
-        Collection<PathValue> pvs = w.get(new Selector(sel));
-        if (! pvs.iterator().hasNext()) {
+        Collection<Entry> entries = w.get(new Selector(sel));
+        if (! entries.iterator().hasNext()) {
             return null;
         } else {
-            return propertiesOfValue(pvs.iterator().next().getValue());
+            return propertiesOfValue(entries.iterator().next().getValue());
         }
     }
 
@@ -183,12 +183,12 @@ public class Admin {
      */
     public Map<String, Properties> getStoragesFromBackend(String backend, String yaks) throws YException {
         String sel = String.format("/@/%s/plugins/yaks/backend/%s/storage/*", yaks, backend);
-        Collection<PathValue> pvs = w.get(new Selector(sel));
-        Map<String, Properties> result = new Hashtable<String, Properties>(pvs.size());
-        for (PathValue pv : pvs) {
-            String stPath = pv.getPath().toString();
+        Collection<Entry> entries = w.get(new Selector(sel));
+        Map<String, Properties> result = new Hashtable<String, Properties>(entries.size());
+        for (Entry entry : entries) {
+            String stPath = entry.getPath().toString();
             String stid = stPath.substring(stPath.lastIndexOf('/')+1);
-            result.put(stid, propertiesOfValue(pv.getValue()));
+            result.put(stid, propertiesOfValue(entry.getValue()));
         }
         return result;
     }
@@ -205,9 +205,9 @@ public class Admin {
      */
     public void removeStorage(String stid, String yaks) throws YException {
         String sel = String.format("/@/%s/plugins/yaks/backend/*/storage/%s", yaks, stid);
-        Collection<PathValue> pvs = w.get(new Selector(sel));
-        if (pvs.iterator().hasNext()) {
-            Path p = pvs.iterator().next().getPath();
+        Collection<Entry> entries = w.get(new Selector(sel));
+        if (entries.iterator().hasNext()) {
+            Path p = entries.iterator().next().getPath();
             w.remove(p);
         }
     }
