@@ -24,7 +24,10 @@ public class YEval {
             Yaks y = Yaks.login(locator, null);
 
             System.out.println("Use Workspace on '/'");
-            Workspace w = y.workspace(new Path("/"));
+            // Note that we use a Workspace with executor here, for our Eval.callback
+            // below to be called in a separate thread rather that in Yaks I/O thread.
+            // Thus, the callback can perform some Yaks operations (e.g.: get)
+            Workspace w = y.workspaceWithExecutor(new Path("/"));
 
             System.out.println("Register eval "+path);
             w.registerEval(path, 

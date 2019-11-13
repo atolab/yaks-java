@@ -3,7 +3,6 @@ package is.yaks;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -111,11 +110,30 @@ public class Yaks {
     /**
      * Creates a Workspace using the provided path.
      * All relative {@link Selector} or {@Path} used with this Workspace will be relative to this path.
+     * <p>
+     * Notice that all subscription listeners and eval callbacks declared in this workspace will be
+     * executed by the I/O thread. This implies that no long operations or other call to Yaks
+     * shall be performed in those callbacks.
      *
      * @param path the Workspace's path.
      * @return a Workspace.
      */
     public Workspace workspace(Path path) {
+        return new Workspace(path, zenoh, null);
+    }
+
+    /**
+     * Creates a Workspace using the provided path.
+     * All relative {@link Selector} or {@Path} used with this Workspace will be relative to this path.
+     * <p>
+     * Notice that all subscription listeners and eval callbacks declared in this workspace will be
+     * executed by a CachedThreadPool. This is useful when listeners and/or callbacks need to perform
+     * long operations or need to call other Yaks operations.
+     *
+     * @param path the Workspace's path.
+     * @return a Workspace.
+     */
+    public Workspace workspaceWithExecutor(Path path) {
         return new Workspace(path, zenoh, threadPool);
     }
 

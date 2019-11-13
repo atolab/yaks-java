@@ -229,28 +229,45 @@ public class Workspace {
                 new DataHandler() {
                     public void handleData(String rname, ByteBuffer data, DataInfo info) {
                         LOG.debug("subscribe on {} : received notif for {} (kind:{})", s, rname, info.getKind());
-                        try {
-                            // TODO: list of more than 1 change when available in zenoh-c
-                            List<Change> changes = new ArrayList<Change>(1);
+                        // TODO: list of more than 1 change when available in zenoh-c
+                        List<Change> changes = new ArrayList<Change>(1);
 
+                        try {
                             Path path = new Path(rname);
                             Change.Kind kind = Change.Kind.fromInt(info.getKind());
                             short encodingFlag = (short) info.getEncoding();
                             Timestamp timestamp= info.getTimestamp();
-                            try {
-                                Value value = null;
-                                if (kind != Change.Kind.REMOVE) {
-                                    value = Encoding.fromFlag(encodingFlag).getDecoder().decode(data);
-                                }
-                                Change change = new Change(path, kind, timestamp, value);
-                                changes.add(change);
-                            } catch (YException e) {
-                                LOG.warn("subscribe on {}: error decoding change for {} : {}", s, rname, e);
+                            Value value = null;
+                            if (kind != Change.Kind.REMOVE) {
+                                value = Encoding.fromFlag(encodingFlag).getDecoder().decode(data);
                             }
-                            listener.onChanges(changes);
-                        } catch (Throwable e) {
-                            LOG.warn("subscribe on {} : error receiving notification for {} : {}", s, rname, e);
-                            LOG.debug("Stack trace: ", e);
+                            Change change = new Change(path, kind, timestamp, value);
+                            changes.add(change);
+                        } catch (YException e) {
+                            LOG.warn("subscribe on {}: error decoding change for {} : {}", s, rname, e);
+                        }
+
+                        if (threadPool != null) {
+                            threadPool.execute(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        listener.onChanges(changes);
+                                    } catch (Throwable e) {
+                                        LOG.warn("subscribe on {} : error receiving notification for {} : {}", s, rname, e);
+                                        LOG.debug("Stack trace: ", e);
+                                    }
+                                }
+                            });
+                        }
+                        else
+                        {
+                            try {
+                                listener.onChanges(changes);
+                            } catch (Throwable e) {
+                                LOG.warn("subscribe on {} : error receiving notification for {} : {}", s, rname, e);
+                                LOG.debug("Stack trace: ", e);
+                            }
                         }
                     }
                 });
@@ -292,24 +309,42 @@ public class Workspace {
             QueryHandler qh = new QueryHandler() {
                 public void handleQuery(String rname, String predicate, RepliesSender repliesSender) {
                     LOG.debug("Registered eval on {} handling query {}?{}", p, rname, predicate);
-                    try {
-                        Selector s = new Selector(rname+"?"+predicate);
+                    Selector s = new Selector(rname+"?"+predicate);
+                    if (threadPool != null) {
                         threadPool.execute(new Runnable() {
                             @Override
                             public void run() {
-                                Value v = eval.callback(path, predicateToProperties(s.getProperties()));
-                                LOG.debug("Registered eval on {} handling query {}?{} returns: {}", p, rname, predicate, v);
-                                repliesSender.sendReplies(
-                                    new Resource[]{
-                                        new Resource(path.toString(), v.encode(), v.getEncoding().getFlag(), Change.Kind.PUT.value())
-                                    }
-                                );
+                                try {
+                                    Value v = eval.callback(path, predicateToProperties(s.getProperties()));
+                                    LOG.debug("Registered eval on {} handling query {}?{} returns: {}", p, rname, predicate, v);
+                                    repliesSender.sendReplies(
+                                        new Resource[]{
+                                            new Resource(path.toString(), v.encode(), v.getEncoding().getFlag(), Change.Kind.PUT.value())
+                                        }
+                                    );
+                                } catch (Throwable e) {
+                                    LOG.warn("Registered eval on {} caught an exception while handling query {} {} : {}", p, rname, predicate, e);
+                                    LOG.debug("Stack trace: ", e);
+                                    repliesSender.sendReplies(EMPTY_EVAL_REPLY);
+                                }
                             }
                         });
-                    } catch (Throwable e) {
-                        LOG.warn("Registered eval on {} caught an exception while handling query {} {} : {}", p, rname, predicate, e);
-                        LOG.debug("Stack trace: ", e);
-                        repliesSender.sendReplies(EMPTY_EVAL_REPLY);
+                    }
+                    else
+                    {
+                        try {
+                            Value v = eval.callback(path, predicateToProperties(s.getProperties()));
+                            LOG.debug("Registered eval on {} handling query {}?{} returns: {}", p, rname, predicate, v);
+                            repliesSender.sendReplies(
+                                new Resource[]{
+                                    new Resource(path.toString(), v.encode(), v.getEncoding().getFlag(), Change.Kind.PUT.value())
+                                }
+                            );
+                        } catch (Throwable e) {
+                            LOG.warn("Registered eval on {} caught an exception while handling query {} {} : {}", p, rname, predicate, e);
+                            LOG.debug("Stack trace: ", e);
+                            repliesSender.sendReplies(EMPTY_EVAL_REPLY);
+                        }
                     }
                 }
             };
