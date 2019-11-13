@@ -7,7 +7,7 @@ import is.yaks.Yaks;
 class YPutThr {
 
     public static void main(String[] args) {
-        String locator = "tcp/127.0.0.1:7447";
+        String locator = null;
         if (args.length < 1) {
             System.out.println("USAGE:");
             System.out.println("\tYPutThr [I|W]<payload-size> [<zenoh-locator>]");
@@ -51,7 +51,7 @@ class YPutThr {
 
             Value v = new RawValue(data);
 
-            System.out.println("Login to "+locator+"...");
+            System.out.println("Login to Yaks (locator="+locator+")...");
             Yaks y = Yaks.login(locator, null);
 
             System.out.println("Use Workspace on '/'");

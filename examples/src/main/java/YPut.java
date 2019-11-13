@@ -3,8 +3,7 @@ import is.yaks.*;
 public class YPut {
 
     public static void main(String[] args) {
-
-        String locator = "tcp/127.0.0.1:7447";
+        String locator = null;
         if (args.length > 0) {
             locator = args[0];
         }
@@ -24,7 +23,7 @@ public class YPut {
             Path p = new Path(path);
             Value v = new StringValue(value);
 
-            System.out.println("Login to "+locator+"...");
+            System.out.println("Login to Yaks (locator="+locator+")...");
             Yaks y = Yaks.login(locator, null);
 
             System.out.println("Use Workspace on '/demo/example'");
