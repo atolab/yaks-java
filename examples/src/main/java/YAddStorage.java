@@ -5,19 +5,19 @@ import java.util.Properties;
 public class YAddStorage {
 
     public static void main(String[] args) {
-        String locator = null;
-        if (args.length > 0) {
-            locator = args[0];
-        }
-
         String selector = "/demo/example/**";
-        if (args.length > 1) {
-            selector = args[1];
+        if (args.length > 0) {
+            selector = args[0];
         }
 
         String storageId = "Demo";
+        if (args.length > 1) {
+            storageId = args[1];
+        }
+
+        String locator = null;
         if (args.length > 2) {
-            storageId = args[2];
+            locator = args[2];
         }
 
         try {

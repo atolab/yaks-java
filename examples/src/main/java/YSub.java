@@ -6,14 +6,14 @@ import java.util.List;
 public class YSub    {
 
     public static void main(String[] args) {
-        String locator = null;
+        String s = "/demo/example/**";
         if (args.length > 0) {
-            locator = args[0];
+            s = args[0];
         }
 
-        String s = "/demo/example/**";
+        String locator = null;
         if (args.length > 1) {
-            s = args[1];
+            locator = args[1];
         }
 
         try {

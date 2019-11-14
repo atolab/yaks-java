@@ -7,14 +7,14 @@ import java.util.Properties;
 public class YEval {
 
     public static void main(String[] args) {
-        String locator = null;
+        String p = "/demo/example/yaks-java-eval";
         if (args.length > 0) {
-            locator = args[0];
+            p = args[0];
         }
 
-        String p = "/demo/example/yaks-java-eval";
+        String locator = null;
         if (args.length > 1) {
-            p = args[1];
+            locator = args[1];
         }
 
         try {

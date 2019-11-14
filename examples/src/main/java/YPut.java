@@ -3,20 +3,20 @@ import is.yaks.*;
 public class YPut {
 
     public static void main(String[] args) {
-        String locator = null;
-        if (args.length > 0) {
-            locator = args[0];
-        }
-
-        // If not specified as 2nd argument, use a relative path (to the workspace below): "yaks-java-put"
+        // If not specified as 1st argument, use a relative path (to the workspace below): "yaks-java-put"
         String path = "yaks-java-put";
-        if (args.length > 1) {
-            path = args[1];
+        if (args.length > 0) {
+            path = args[0];
         }
 
         String value = "Put from Yaks Java!";
+        if (args.length > 1) {
+            value = args[1];
+        }
+
+        String locator = null;
         if (args.length > 2) {
-            value = args[2];
+            locator = args[2];
         }
 
         try {
