@@ -61,9 +61,9 @@ public class Workspace {
     /**
      * Put a path/value into Yaks.
      * 
-     * @param path the Path
-     * @param value the value
-     * @throws YException if put failed.
+     * @param path the {@link Path}
+     * @param value the {@link Value}
+     * @throws YException if {@link put} failed.
      */
     public void put(Path path, Value value) throws YException {
         path = toAsbsolutePath(path);
@@ -79,9 +79,9 @@ public class Workspace {
     /**
      * Update a path/value into Yaks.
      * 
-     * @param path the Path
+     * @param path the {@link Path}
      * @param value a delta to be applied on the existing value.
-     * @throws YException if update failed.
+     * @throws YException if {@link update} failed.
      */
     public void update(Path path, Value value) throws YException {
         path = toAsbsolutePath(path);
@@ -97,8 +97,8 @@ public class Workspace {
     /**
      * Remove a path/value from Yaks.
      * 
-     * @param path the Path to be removed
-     * @throws YException if remove failed.
+     * @param path the {@link Path} to be removed
+     * @throws YException if {@link remove} failed.
      */
     public void remove(Path path) throws YException {
         path = toAsbsolutePath(path);
@@ -113,9 +113,9 @@ public class Workspace {
     /**
      * Get a selection of path/value from Yaks.
      * 
-     * @param selector the selector expressing the selection.
+     * @param selector the {@link Selector} expressing the selection.
      * @return a collection of path/value.
-     * @throws YException if get failed.
+     * @throws YException if {@link get} failed.
      */
     public Collection<Entry> get(Selector selector) throws YException {
         final Selector s = toAsbsoluteSelector(selector);
@@ -216,10 +216,10 @@ public class Workspace {
     /**
      * Subscribe to a selection of path/value from Yaks.
      * 
-     * @param selector the selector expressing the selection.
-     * @param listener the Listener that will be called for each change of a path/value matching the selection.
-     * @return a subscription id.
-     * @throws YException if subscribe failed.
+     * @param selector the {@link Selector} expressing the selection.
+     * @param listener the {@link Listener} that will be called for each change of a path/value matching the selection.
+     * @return a {@link SubscriptionId}.
+     * @throws YException if {@link subscribe} failed.
      */
     public SubscriptionId subscribe(Selector selector, Listener listener) throws YException {
         final Selector s = toAsbsoluteSelector(selector);
@@ -281,8 +281,8 @@ public class Workspace {
     /**
      * Unregisters a previous subscription.
      * 
-     * @param the subscription id to unregister
-     * @throws YException if unsubscribe failed.
+     * @param the {@link SubscriptionId} to unregister
+     * @throws YException if {@link unsusbscribe} failed.
      */
     public void unsubscribe(SubscriptionId subid) throws YException {
         try {
@@ -295,10 +295,10 @@ public class Workspace {
     private static final Resource[] EMPTY_EVAL_REPLY = new Resource[0];
 
     /**
-     * Registers an evaluation function under the provided path.
+     * Registers an evaluation function under the provided {@link Path}.
      * The function will be evaluated in a dedicated thread, and thus may call any other Workspace operation.
      * 
-     * @param path the Path where the function can be triggered using {@link #eval(Selector)}
+     * @param path the {@link Path} where the function can be triggered using {@link get}
      * @param eval the evaluation function
      * @throws YException if registration failed.
      */
@@ -361,7 +361,7 @@ public class Workspace {
     /**
      * Unregister a previously registered evaluation function.
      * 
-     * @param path the path where the function has been registered
+     * @param path the {@link Path} where the function has been registered
      * @throws YException if unregistration failed.
      */
     public void unregisterEval(Path path) throws YException {

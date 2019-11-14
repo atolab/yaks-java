@@ -57,13 +57,15 @@ public class Yaks {
 
     /**
      * Establish a session with the Yaks instance reachable via provided Zenoh
-     * locator. The locator must have the format: tcp/<ip>:<port> .
+     * locator. If the provided locator is ``null``, {@link login} will perform some 
+     * dynamic discovery and try to establish the session automatically. When not 
+     * ``null``, the locator must have the format: {@code tcp/<ip>:<port>}.
      * 
-     * @param locator    the Zenoh locator.
+     * @param locator    the Zenoh locator or ``null``.
      * @param properties the Properties to be used for this session (e.g. "user",
-     *                   "password"...). Can be null
-     * @return a Yaks object.
-     * @throws YException if login fails.
+     *                   "password"...). Can be ``null``.
+     * @return a {@link Yaks} object.
+     * @throws YException if {@link login} fails.
      */
     public static Yaks login(String locator, Properties properties) throws YException {
         try {
@@ -109,14 +111,14 @@ public class Yaks {
 
     /**
      * Creates a Workspace using the provided path.
-     * All relative {@link Selector} or {@Path} used with this Workspace will be relative to this path.
+     * All relative {@link Selector} or {@link Path} used with this Workspace will be relative to this path.
      * <p>
      * Notice that all subscription listeners and eval callbacks declared in this workspace will be
      * executed by the I/O thread. This implies that no long operations or other call to Yaks
      * shall be performed in those callbacks.
      *
      * @param path the Workspace's path.
-     * @return a Workspace.
+     * @return a {@link Workspace}.
      */
     public Workspace workspace(Path path) {
         return new Workspace(path, zenoh, null);
@@ -124,21 +126,21 @@ public class Yaks {
 
     /**
      * Creates a Workspace using the provided path.
-     * All relative {@link Selector} or {@Path} used with this Workspace will be relative to this path.
+     * All relative {@link Selector} or {@link Path} used with this Workspace will be relative to this path.
      * <p>
      * Notice that all subscription listeners and eval callbacks declared in this workspace will be
      * executed by a CachedThreadPool. This is useful when listeners and/or callbacks need to perform
      * long operations or need to call other Yaks operations.
      *
      * @param path the Workspace's path.
-     * @return a Workspace.
+     * @return a {@link Workspace}.
      */
     public Workspace workspaceWithExecutor(Path path) {
         return new Workspace(path, zenoh, threadPool);
     }
 
     /**
-     * Returns the Admin object.
+     * Returns the {@link Admin} object.
      */
     public Admin admin() {
         return admin;
