@@ -63,7 +63,7 @@ public class Workspace {
      * 
      * @param path the {@link Path}
      * @param value the {@link Value}
-     * @throws YException if {@link put} failed.
+     * @throws YException if put failed.
      */
     public void put(Path path, Value value) throws YException {
         path = toAsbsolutePath(path);
@@ -81,7 +81,7 @@ public class Workspace {
      * 
      * @param path the {@link Path}
      * @param value a delta to be applied on the existing value.
-     * @throws YException if {@link update} failed.
+     * @throws YException if update failed.
      */
     public void update(Path path, Value value) throws YException {
         path = toAsbsolutePath(path);
@@ -98,7 +98,7 @@ public class Workspace {
      * Remove a path/value from Yaks.
      * 
      * @param path the {@link Path} to be removed
-     * @throws YException if {@link remove} failed.
+     * @throws YException if remove failed.
      */
     public void remove(Path path) throws YException {
         path = toAsbsolutePath(path);
@@ -115,7 +115,7 @@ public class Workspace {
      * 
      * @param selector the {@link Selector} expressing the selection.
      * @return a collection of path/value.
-     * @throws YException if {@link get} failed.
+     * @throws YException if get failed.
      */
     public Collection<Entry> get(Selector selector) throws YException {
         final Selector s = toAsbsoluteSelector(selector);
@@ -219,7 +219,7 @@ public class Workspace {
      * @param selector the {@link Selector} expressing the selection.
      * @param listener the {@link Listener} that will be called for each change of a path/value matching the selection.
      * @return a {@link SubscriptionId}.
-     * @throws YException if {@link subscribe} failed.
+     * @throws YException if subscribe failed.
      */
     public SubscriptionId subscribe(Selector selector, Listener listener) throws YException {
         final Selector s = toAsbsoluteSelector(selector);
@@ -281,8 +281,8 @@ public class Workspace {
     /**
      * Unregisters a previous subscription.
      * 
-     * @param the {@link SubscriptionId} to unregister
-     * @throws YException if {@link unsusbscribe} failed.
+     * @param subid the {@link SubscriptionId} to unregister
+     * @throws YException if unsusbscribe failed.
      */
     public void unsubscribe(SubscriptionId subid) throws YException {
         try {
@@ -298,7 +298,7 @@ public class Workspace {
      * Registers an evaluation function under the provided {@link Path}.
      * The function will be evaluated in a dedicated thread, and thus may call any other Workspace operation.
      * 
-     * @param path the {@link Path} where the function can be triggered using {@link get}
+     * @param path the {@link Path} where the function can be triggered using {@link #get(Selector)}
      * @param eval the evaluation function
      * @throws YException if registration failed.
      */

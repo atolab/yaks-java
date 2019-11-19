@@ -57,7 +57,7 @@ public class Yaks {
 
     /**
      * Establish a session with the Yaks instance reachable via provided Zenoh
-     * locator. If the provided locator is ``null``, {@link login} will perform some 
+     * locator. If the provided locator is ``null``, login will perform some 
      * dynamic discovery and try to establish the session automatically. When not 
      * ``null``, the locator must have the format: {@code tcp/<ip>:<port>}.
      * 
@@ -65,7 +65,7 @@ public class Yaks {
      * @param properties the Properties to be used for this session (e.g. "user",
      *                   "password"...). Can be ``null``.
      * @return a {@link Yaks} object.
-     * @throws YException if {@link login} fails.
+     * @throws YException if login fails.
      */
     public static Yaks login(String locator, Properties properties) throws YException {
         try {
