@@ -34,58 +34,12 @@
 
   <name>yaks-java</name>
   <description>Yaks-java build POM</description>
-  <url>http://yaks.is</url>
 
-  <licenses>
-    <license>
-      <name>Apache-2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0</url>
-    </license>
-  </licenses>
-
-  <scm>
-    <url>https://github.com/atolab/yaks-java</url>
-    <connection>scm:git:git://github.com/atolab/yaks-java.git</connection>
-    <developerConnection>scm:git:git@github.com:atolab/yaks-java.git</developerConnection>
-  </scm>
-
-  <organization>
-    <name>ADLINK Technology</name>
-    <url>https://www.adlinktech.com/</url>
-  </organization>
-
-  <developers>
-    <developer>
-      <name>Angelo Corsaro</name>
-      <email>angelo.corsaro@adlinktech.com</email>
-      <organization>ADLINK Technology</organization>
-    </developer>
-    <developer>
-      <name>Julien Enoch</name>
-      <email>julien.enoch@adlinktech.com</email>
-      <organization>ADLINK Technology</organization>
-    </developer>
-    <developer>
-      <name>Olivier Hecart</name>
-      <email>olivier.hecart@adlinktech.com</email>
-      <organization>ADLINK Technology</organization>
-    </developer>
-  </developers>
 
   <modules>
     <module>parent-pom</module>
     <module>yaks</module>
     <module>examples</module>
   </modules>
-
-  <profiles>
-    <!-- In release profile, add assembly module -->
-    <profile>
-      <id>release</id>
-      <modules>
-        <module>assembly</module>
-      </modules>
-    </profile>
-  </profiles>
 
 </project>

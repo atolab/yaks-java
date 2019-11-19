@@ -10,11 +10,51 @@
 
 	<name>Yaks parent-pom</name>
 	<description>Parent POM for Yaks</description>
+  	<url>http://yaks.is</url>
 
-	<organization>
-		<name>ADLINK Technology</name>
-		<url>http://www.adlinktech.com/</url>
-	</organization>
+  <licenses>
+    <license>
+      <name>Apache-2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+    </license>
+  </licenses>
+
+  <scm>
+    <url>https://github.com/atolab/yaks-java</url>
+    <connection>scm:git:git://github.com/atolab/yaks-java.git</connection>
+    <developerConnection>scm:git:git@github.com:atolab/yaks-java.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+
+  <organization>
+    <name>ADLINK Technology</name>
+    <url>https://www.adlinktech.com/</url>
+  </organization>
+
+  <developers>
+    <developer>
+      <name>Angelo Corsaro</name>
+      <email>angelo.corsaro@adlinktech.com</email>
+      <organization>ADLINK Technology</organization>
+    </developer>
+    <developer>
+      <name>Julien Enoch</name>
+      <email>julien.enoch@adlinktech.com</email>
+      <organization>ADLINK Technology</organization>
+    </developer>
+    <developer>
+      <name>Olivier Hecart</name>
+      <email>olivier.hecart@adlinktech.com</email>
+      <organization>ADLINK Technology</organization>
+    </developer>
+  </developers>
+
+  <distributionManagement>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -28,6 +68,8 @@
 
 		<maven-surefire-plugin-version>2.22.0</maven-surefire-plugin-version>
 		<maven-javadoc-plugin-version>3.1.0</maven-javadoc-plugin-version>
+    <nexus-staging-maven-plugin-version>1.6.8</nexus-staging-maven-plugin-version>
+    <maven-gpg-plugin-version>1.6</maven-gpg-plugin-version>
 	</properties>
 
 	<dependencyManagement>
@@ -80,7 +122,53 @@
 					<artifactId>maven-javadoc-plugin</artifactId>
 					<version>${maven-javadoc-plugin-version}</version>
 				</plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>${maven-gpg-plugin-version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.sonatype.plugins</groupId>
+          <artifactId>nexus-staging-maven-plugin</artifactId>
+          <version>${nexus-staging-maven-plugin-version}</version>
+          <configuration>
+            <serverId>ossrh</serverId>
+            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+          </configuration>
+        </plugin>
 			</plugins>
 		</pluginManagement>
 	</build>
+
+  <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <!-- GPG signature of files -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <!-- Deployment to Maven Central -->
+          <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+            <extensions>true</extensions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
 </project>

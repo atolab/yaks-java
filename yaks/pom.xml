@@ -34,12 +34,25 @@
 
 
   <profiles>
-    <!-- release profile: the javadoc is generated.
-    -->
+    <!-- release profile: the javadoc and sources jars are generated. -->
     <profile>
       <id>release</id>
       <build>
         <plugins>
+          <!-- sources jar -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <!-- javadoc jar -->
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
@@ -48,6 +61,7 @@
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>javadoc</goal>
+                  <goal>jar</goal>
                 </goals>
               </execution>
             </executions>
