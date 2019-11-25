@@ -66,7 +66,7 @@
 
    Usage:
    ```bash
-   java -cp target/yaks-examples-<version>.jar YAddStorage [selector] [locator]
+   java -cp target/yaks-examples-<version>.jar YGet [selector] [locator]
    ```
    where the optional arguments are:
    - **selector** : the selector that all replies shall match.  
@@ -116,7 +116,7 @@
 
    Usage:
    ```bash
-   java -cp target/yaks-examples-<version>.jar YSub [selector] [locator]
+   java -cp target/yaks-examples-<version>.jar YEval [selector] [locator]
    ```
    where the optional arguments are:
    - **path** : the eval path.  
