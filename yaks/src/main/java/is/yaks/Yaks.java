@@ -28,7 +28,7 @@ public class Yaks {
     private static String hexdump(byte[] bytes) {
         StringBuffer sb = new StringBuffer();
         for (int i = 0; i < bytes.length; ++i) {
-            sb.append(HEX_DIGITS[bytes[i] & 0x00F0 >>> 4]).append(HEX_DIGITS[bytes[i] & 0x000F]);
+            sb.append(HEX_DIGITS[(bytes[i] & 0xF0) >>> 4]).append(HEX_DIGITS[bytes[i] & 0x0F]);
         }
         return sb.toString();
     }
