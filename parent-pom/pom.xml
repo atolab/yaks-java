@@ -5,7 +5,7 @@
 
 	<groupId>is.yaks</groupId>
 	<artifactId>parent-pom</artifactId>
-	<version>0.3.0-SNAPSHOT</version>
+	<version>0.3.0</version>
 	<packaging>pom</packaging>
 
 	<name>Yaks parent-pom</name>
@@ -61,7 +61,7 @@
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 
-		<zenoh-version>0.3.0-SNAPSHOT</zenoh-version>
+		<zenoh-version>0.3.0</zenoh-version>
 		<slf4j-version>1.7.25</slf4j-version>
 		<junit-version>4.12</junit-version>
 		<logback-version>1.2.3</logback-version>

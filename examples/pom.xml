@@ -5,7 +5,7 @@
 
   <groupId>is.yaks</groupId>
   <artifactId>yaks-examples</artifactId>
-  <version>0.3.0-SNAPSHOT</version>
+  <version>0.3.0</version>
   <packaging>jar</packaging>
   <name>Yaks examples in Java</name>
 
