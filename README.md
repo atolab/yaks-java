@@ -1,20 +1,9 @@
-[![Build Status](https://travis-ci.com/atolab/yaks-java.svg?branch=master)](https://travis-ci.com/atolab/yaks-java)
-[![Documentation Status](https://readthedocs.org/projects/yaks-java/badge/?version=latest)](https://yaks-java.readthedocs.io/en/latest/?badge=latest)
+The YAKS project has been merged into the **zenoh** project.
 
-# Yaks Java Client API
+**Retrieve all the YAKS features an more in the [Eclipse zenoh](http://zenoh.io) project!**
 
-The Java API for Yaks, based on the zenoh-java API.
-
-## Building
-Requirements:
- - Java >= 8
- - Apache Maven >= 3.6.0
-
-To build:
-```mvn clean install```
-
-To generate the Javadoc and a ZIP file for release in assembly/target:
-```mvn -Prelease clean install```
-
-## Examples
-See examples/README.md
+  - zenoh service: https://github.com/eclipse-zenoh/zenoh
+  - Python API: https://github.com/eclipse-zenoh/zenoh-python
+  - Java API: https://github.com/eclipse-zenoh/zenoh-java
+  - Go API: https://github.com/eclipse-zenoh/zenoh-go
+  - C API: https://github.com/eclipse-zenoh/zenoh-c
